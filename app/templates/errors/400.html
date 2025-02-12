@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <h1 class="text-6xl font-bold text-gray-800 dark:text-gray-200 mb-4">400</h1>
+        <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">Requête invalide</p>
+        <p class="text-gray-500 dark:text-gray-500 mb-8">La requête n'a pas pu être traitée correctement.</p>
+        <a href="{{ url_for('index') }}" 
+           class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+            Retour à l'accueil
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4">
+    <!-- Zone de dépôt principale -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+        <div id="dropZone" 
+             class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center
+                    hover:border-primary-500 dark:hover:border-primary-400 transition-colors duration-200">
+            <input type="file" id="fileInput" class="hidden" accept="image/*,video/*" multiple>
+            <div class="space-y-4">
+                <div class="flex justify-center space-x-2">
+                    <i class="far fa-images text-4xl text-gray-400 dark:text-gray-500"></i>
+                    <i class="fas fa-video text-4xl text-gray-400 dark:text-gray-500"></i>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Glissez vos fichiers ici ou
+                    <button onclick="document.getElementById('fileInput').click()" 
+                            class="text-primary-600 dark:text-primary-400 hover:underline">
+                        parcourez
+                    </button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de conversion -->
+    <div class="grid md:grid-cols-2 gap-6">
+        <!-- Section Images -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                <i class="far fa-images text-2xl text-primary-600 dark:text-primary-400 mr-3"></i>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Conversion d'Images</h2>
+            </div>
+            <form id="imageConvertForm" class="space-y-4">
+                <input type="hidden" name="type" value="image">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Format de sortie</label>
+                    <select name="format" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 
+                                               dark:bg-gray-700 dark:text-white">
+                        <option value="JPEG">JPEG</option>
+                        <option value="PNG">PNG</option>
+                        <option value="WEBP">WEBP</option>
+                        <option value="BMP">BMP</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Qualité</label>
+                    <input type="range" min="1" max="100" value="85" class="w-full" id="imageQuality" name="quality">
+                    <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                        <span>Compression max</span>
+                        <span id="imageQualityValue">85%</span>
+                        <span>Meilleure qualité</span>
+                    </div>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 
+                               rounded-lg transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-sync-alt mr-2"></i>Convertir l'image
+                </button>
+            </form>
+        </div>
+
+        <!-- Section Vidéos -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex items-center mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                <i class="fas fa-video text-2xl text-red-600 dark:text-red-400 mr-3"></i>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Conversion de Vidéos</h2>
+            </div>
+            <form id="videoConvertForm" class="space-y-4">
+                <input type="hidden" name="type" value="video">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Format de sortie</label>
+                    <select name="format" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 
+                                               dark:bg-gray-700 dark:text-white">
+                        <option value="mp4">MP4</option>
+                        <option value="webm">WebM</option>
+                        <option value="avi">AVI</option>
+                        <option value="mkv">MKV</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Qualité</label>
+                    <input type="range" min="1" max="100" value="85" class="w-full" id="videoQuality" name="quality">
+                    <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                        <span>Compression max</span>
+                        <span id="videoQualityValue">85%</span>
+                        <span>Meilleure qualité</span>
+                    </div>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 
+                               rounded-lg transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-sync-alt mr-2"></i>Convertir la vidéo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Indicateur de progression -->
+    <div id="progressOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="mb-4">
+                    <i class="fas fa-spinner fa-spin text-4xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Conversion en cours...</h3>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4 dark:bg-gray-700">
+                    <div id="progressBar" class="bg-primary-600 h-2.5 rounded-full dark:bg-primary-500" style="width: 0%"></div>
+                </div>
+                <p id="progressText" class="text-gray-600 dark:text-gray-400">Veuillez patienter pendant la conversion de votre fichier.</p>
+                <p id="progressDetails" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></p>
+                <button id="cancelButton" class="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg hidden">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prévisualisation -->
+    <div id="preview" class="hidden mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Prévisualisation</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto" 
+             id="previewGrid">
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mise à jour des valeurs de qualité
+    ['image', 'video'].forEach(type => {
+        const quality = document.getElementById(`${type}Quality`);
+        const qualityValue = document.getElementById(`${type}QualityValue`);
+        if (quality && qualityValue) {
+            quality.addEventListener('input', function() {
+                qualityValue.textContent = `${this.value}%`;
+            });
+        }
+    });
+});
+</script>
+
+<script src="{{ url_for('static', filename='js/mediaManager.js') }}"></script>
+{% endblock %}

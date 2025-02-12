@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4">
+    <!-- Section principale -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                YouTube Downloader
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400">
+                Téléchargez vos vidéos YouTube préférées en MP4 ou MP3
+            </p>
+        </div>
+
+        <!-- Formulaire d'URL -->
+        <form id="urlForm" class="space-y-4">
+            <div class="flex gap-2">
+                <input type="url" id="videoUrl" required
+                       class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                       placeholder="Collez l'URL de la vidéo YouTube ici">
+                <button type="submit" 
+                        class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-search mr-2"></i>Vérifier
+                </button>
+            </div>
+        </form>
+
+        <!-- Prévisualisation de la vidéo -->
+        <div id="videoPreview" class="hidden mt-6">
+            <div class="border dark:border-gray-700 rounded-lg overflow-hidden">
+                <!-- Informations vidéo -->
+                <div class="flex flex-col md:flex-row gap-4 p-4">
+                    <div class="w-full md:w-48 flex-shrink-0">
+                        <img id="thumbnail" class="w-full rounded-lg" alt="Miniature">
+                    </div>
+                    <div class="flex-1">
+                        <h2 id="videoTitle" class="text-lg font-semibold text-gray-900 dark:text-white mb-2"></h2>
+                        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                            <p id="channelName"></p>
+                            <p id="videoDuration"></p>
+                            <p id="videoViews"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options de téléchargement -->
+                <div class="border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Format vidéo -->
+                        <div class="space-y-3">
+                            <h3 class="font-medium text-gray-900 dark:text-white">
+                                <i class="fas fa-video mr-2"></i>Télécharger en Vidéo
+                            </h3>
+                            <select id="videoQuality" 
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                <option value="highest">Meilleure qualité</option>
+                                <option value="720p">720p</option>
+                                <option value="480p">480p</option>
+                                <option value="360p">360p</option>
+                            </select>
+                            <button onclick="downloadVideo('video')"
+                                    class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                                <i class="fas fa-download mr-2"></i>Télécharger MP4
+                            </button>
+                        </div>
+
+                        <!-- Format audio -->
+                        <div class="space-y-3">
+                            <h3 class="font-medium text-gray-900 dark:text-white">
+                                <i class="fas fa-music mr-2"></i>Télécharger en Audio
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Format MP3 - Qualité 192kbps
+                            </p>
+                            <button onclick="downloadVideo('audio')"
+                                    class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                                <i class="fas fa-download mr-2"></i>Télécharger MP3
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Indicateur de progression -->
+        <div id="progressOverlay" class="hidden mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">
+            <div class="flex items-center gap-4">
+                <div class="flex-1">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div id="progressBar" class="bg-primary-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Préparation du téléchargement...
+                    </p>
+                </div>
+                <button id="cancelButton" onclick="cancelDownload()"
+                        class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTaskId = null;
+
+document.getElementById('urlForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = document.getElementById('videoUrl').value;
+    if (!url) return;
+
+    try {
+        const response = await fetch(`/youtube/info?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error || 'Erreur lors de la récupération des informations');
+
+        // Afficher les informations
+        document.getElementById('thumbnail').src = data.thumbnail;
+        document.getElementById('videoTitle').textContent = data.title;
+        document.getElementById('channelName').textContent = `Chaîne: ${data.channel}`;
+        document.getElementById('videoDuration').textContent = `Durée: ${formatDuration(data.duration)}`;
+        document.getElementById('videoViews').textContent = `Vues: ${formatNumber(data.views)}`;
+        
+        document.getElementById('videoPreview').classList.remove('hidden');
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+});
+
+async function downloadVideo(format) {
+    const url = document.getElementById('videoUrl').value;
+    const quality = document.getElementById('videoQuality').value;
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+
+    try {
+        document.getElementById('progressOverlay').classList.remove('hidden');
+        progressBar.style.width = '0%';
+        progressText.textContent = 'Démarrage du téléchargement...';
+
+        const response = await fetch(`/youtube/download?url=${encodeURIComponent(url)}&format=${format}&quality=${quality}`);
+        if (!response.ok) throw new Error('Erreur lors du téléchargement');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `download.${format === 'audio' ? 'mp3' : 'mp4'}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showNotification('Téléchargement terminé !', 'success');
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        document.getElementById('progressOverlay').classList.add('hidden');
+    }
+}
+
+function formatDuration(seconds) {
+    if (!seconds) return '00:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+}
+
+function formatNumber(num) {
+    return new Intl.NumberFormat().format(num);
+}
+
+function cancelDownload() {
+    if (currentTaskId) {
+        // Implement cancel logic here
+        showNotification('Téléchargement annulé', 'info');
+        document.getElementById('progressOverlay').classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}

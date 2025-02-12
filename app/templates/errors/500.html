@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+    <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+            500 - Erreur Serveur
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 mb-8">
+            Une erreur inattendue s'est produite.
+        </p>
+        <a href="{{ url_for('index') }}" class="inline-flex items-center px-4 py-2 rounded-md bg-primary-600 text-white hover:bg-primary-700 transition-colors">
+            <i class="fas fa-home mr-2"></i>
+            Retour à l'accueil
+        </a>
+    </div>
+</div>
+{% endblock %}
