@@ -23,89 +23,49 @@ def get_format_string(quality: str) -> str:
 
 @youtube_bp.route("/download", methods=["GET"])
 def download_youtube_video():
-    """
-    Télécharge une vidéo YouTube en MP4.
-    GET /youtube/download?url=...&audio_only=0/1
-    """
     url = request.args.get("url")
-    format = request.args.get("format", "video")  # video ou audio
-    quality = request.args.get("quality", "highest")  # highest, 720p, 480p, 360p
+    format = request.args.get("format", "video")
+    quality = request.args.get("quality", "highest")
     
     if not url:
-        return jsonify({"error": "Paramètre 'url' manquant"}), 400
-
-    temp_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_youtube')
-    ensure_dir(temp_dir)
-    temp_filename = f"{uuid.uuid4()}"
-
-    ydl_opts = {
-        "outtmpl": os.path.join(temp_dir, f"{temp_filename}.%(ext)s"),
-        "format": "bestaudio/best" if format == "audio" else get_format_string(quality),
-        "postprocessors": [],
-        "ignoreerrors": True,
-        "no_warnings": True,
-        "extract_flat": False,
-        "quiet": True,
-        "nocheckcertificate": True,
-        "noplaylist": True,
-    }
-
-    # Configuration audio si nécessaire
-    if format == "audio":
-        ydl_opts["postprocessors"].append({
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192"
-        })
+        return jsonify({"error": "URL manquante"}), 400
 
     try:
+        ydl_opts = {
+            "outtmpl": os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_youtube', f"{uuid.uuid4()}.%(ext)s"),
+            "format": "bestaudio/best" if format == "audio" else get_format_string(quality),
+            "postprocessors": [],
+            "quiet": True,
+            "noplaylist": True
+        }
+
+        if format == "audio":
+            ydl_opts["postprocessors"].append({
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192"
+            })
+
         with YoutubeDL(ydl_opts) as ydl:
-            # Extraire les informations et le titre de la vidéo
-            info = ydl.extract_info(url, download=False)
-            if info is None:
+            info = ydl.extract_info(url, download=True)
+            if not info:
                 return jsonify({"error": "Impossible d'obtenir les informations de la vidéo"}), 400
 
-            # Créer un nom de fichier sécurisé
-            safe_title = secure_filename(info.get('title', 'video'))
-            output_ext = 'mp3' if format == 'audio' else 'mp4'
-            final_filename = f"{safe_title}.{output_ext}"
+            downloaded_file = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_youtube', 
+                                         f"{info['id']}.{info.get('ext', 'mp4')}")
+            
+            response = send_file(downloaded_file, as_attachment=True, 
+                               download_name=f"{secure_filename(info['title'])}.{info.get('ext', 'mp4')}")
 
-            # Télécharger la vidéo
-            ydl.download([url])
+            @after_this_request
+            def cleanup(response):
+                safe_remove_file(downloaded_file)
+                return response
 
-            # Trouver le fichier téléchargé
-            downloaded_file = None
-            for file in os.listdir(temp_dir):
-                if file.startswith(temp_filename):
-                    downloaded_file = os.path.join(temp_dir, file)
-                    break
-
-            if not downloaded_file or not os.path.exists(downloaded_file):
-                raise Exception("Le fichier téléchargé est introuvable")
-
-            try:
-                return send_file(
-                    downloaded_file,
-                    as_attachment=True,
-                    download_name=final_filename,
-                    mimetype='audio/mpeg' if format == 'audio' else 'video/mp4'
-                )
-            finally:
-                # Nettoyage différé du fichier temporaire
-                @after_this_request
-                def remove_file(response):
-                    try:
-                        if os.path.exists(downloaded_file):
-                            os.remove(downloaded_file)
-                    except Exception as e:
-                        current_app.logger.error(f"Erreur lors de la suppression du fichier temporaire: {e}")
-                    return response
+            return response
 
     except Exception as e:
-        error_msg = str(e)
-        if "Unable to extract uploader id" in error_msg:
-            return jsonify({"error": "La vidéo n'est pas accessible. Elle est peut-être privée ou a été supprimée."}), 400
-        return jsonify({"error": f"Erreur : {error_msg}"}), 500
+        return jsonify({"error": str(e)}), 500
 
 @youtube_bp.route("/info", methods=["GET"])
 def get_video_info():

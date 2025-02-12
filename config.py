@@ -13,9 +13,10 @@ class Config:
     YOUTUBE_DOWNLOAD_FOLDER: str = os.path.join(BASE_DIR, "downloads")
     YOUTUBE_MAX_DURATION: int = 3600
     LOG_FILE: str = os.path.join(BASE_DIR, "logs", "toolbox.log")
-    CLEANUP_INTERVAL: int = 3600
-    MAX_BATCH_SIZE: int = 10
+    CLEANUP_INTERVAL: int = 1800  # 30 minutes
+    MAX_BATCH_SIZE: int = 20
     DEFAULT_QUALITY: int = 85
+    CHUNK_SIZE: int = 8192  # Taille optimale pour la lecture/écriture de fichiers
     
     @classmethod
     def validate(cls) -> None:
@@ -45,10 +46,13 @@ class Config:
 
     @classmethod
     def init_app(cls, app: Any) -> None:
-        """Initialise l'application avec la configuration."""
+        """Configuration optimisée de l'application"""
         cls.validate()
         app.config.from_object(cls)
+        app.config['MAX_CONTENT_LENGTH'] = cls.MAX_CONTENT_LENGTH
+        app.config['UPLOAD_FOLDER'] = cls.UPLOAD_FOLDER
         
-        # Configuration du logging
-        if not os.path.exists(os.path.dirname(cls.LOG_FILE)):
-            os.makedirs(os.path.dirname(cls.LOG_FILE))
+        # Création des dossiers nécessaires en une seule passe
+        os.makedirs(cls.UPLOAD_FOLDER, exist_ok=True)
+        os.makedirs(cls.TEMP_FOLDER, exist_ok=True)
+        os.makedirs(os.path.dirname(cls.LOG_FILE), exist_ok=True)

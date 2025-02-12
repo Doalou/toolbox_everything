@@ -77,25 +77,36 @@ def process_video(input_path, output_format, quality=85):
 @media_bp.route("/convert", methods=["POST"])
 def convert_media():
     if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
+        return jsonify({'error': 'Fichier manquant'}), 400
         
     file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No filename provided'}), 400
+    if not file.filename:
+        return jsonify({'error': 'Nom de fichier manquant'}), 400
         
     filename = secure_filename(file.filename)
-    target_format = request.form.get('format', 'webp')
+    output_format = request.form.get('format', 'webp').lower()
     quality = int(request.form.get('quality', current_app.config['DEFAULT_QUALITY']))
     
-    temp_dir = ensure_dir(current_app.config['TEMP_FOLDER'])
-    temp_path = create_unique_filename(filename, temp_dir)
-    
     try:
-        file.save(temp_path)
-        # Logique de conversion à implémenter
-        return jsonify({'status': 'success', 'message': 'File converted successfully'})
+        with ResourceManager() as rm:
+            temp_path = create_unique_filename(filename, current_app.config['TEMP_FOLDER'])
+            rm.add(temp_path)
+            file.save(temp_path)
+            
+            if is_video(filename):
+                output_path = process_video(temp_path, output_format, quality)
+                rm.add(output_path)
+            else:
+                img = Image.open(temp_path)
+                output = process_image(img, output_format.upper(), quality)
+                return send_file(output, mimetype=f'image/{output_format}', 
+                               as_attachment=True, download_name=f"converted_{filename}")
+
+        return send_file(output_path, mimetype=f'video/{output_format}', 
+                        as_attachment=True, download_name=f"converted_{filename}")
+                        
     except Exception as e:
-        current_app.logger.error(f'Error converting file: {str(e)}')
+        current_app.logger.error(f'Erreur de conversion: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
 @media_bp.route("/batch", methods=["POST"])
