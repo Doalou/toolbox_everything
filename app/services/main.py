@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, g, abort, redirect, url_for
 import logging
 import time
+import os
 from typing import Optional
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.exceptions import HTTPException
@@ -8,8 +9,25 @@ from logging.handlers import RotatingFileHandler
 from config import Config
 from .youtube_downloader.routes import youtube_bp
 from .media_converter.routes import media_bp
+from yt_dlp.postprocessor import FFmpegPostProcessor
 
 def create_app(config_class: Optional[object] = None) -> Flask:
+    # Configuration FFmpeg pour yt-dlp
+    ffmpeg_paths = [
+        os.path.join('C:', 'ffmpeg', 'bin', 'ffmpeg.exe'),  # Installation standard Windows
+        os.path.join(os.path.dirname(__file__), '..', '..', 'bin', 'ffmpeg.exe'),  # Relatif à l'app
+        'ffmpeg'  # Dans le PATH
+    ]
+    
+    for ffmpeg_path in ffmpeg_paths:
+        if os.path.exists(ffmpeg_path) or os.system(f"where {ffmpeg_path} > nul 2>&1") == 0:
+            FFmpegPostProcessor._ffmpeg_location.set(ffmpeg_path)
+            break
+    else:
+        print("WARNING: FFmpeg non trouvé dans le système. Veuillez installer FFmpeg.")
+        print("Téléchargement: https://www.ffmpeg.org/download.html")
+        print("Une fois installé, assurez-vous que ffmpeg est dans le PATH")
+
     app = Flask(__name__, 
                 template_folder='../templates',
                 static_folder='../static')
@@ -18,18 +36,38 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     app.config.from_object(config_class or Config)
     Config.init_app(app)
     
+    # Ajout du chemin FFmpeg à la configuration de l'app
+    ffmpeg_path = Config.get_ffmpeg_path()
+    if ffmpeg_path:
+        app.config['FFMPEG_PATH'] = ffmpeg_path
+        FFmpegPostProcessor._ffmpeg_location.set(ffmpeg_path)
+    
     # Middleware pour gérer les en-têtes de proxy
     app.wsgi_app = ProxyFix(app.wsgi_app)
     
-    # Configuration du logging
+    # Configuration du logging améliorée
     if not app.debug:
-        file_handler = RotatingFileHandler('toolbox.log', maxBytes=10240, backupCount=10)
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-        ))
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.INFO)
+        log_dir = os.path.join(app.config['BASE_DIR'], 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+        
+        log_file = os.path.join(log_dir, 'toolbox.log')
+        try:
+            file_handler = RotatingFileHandler(log_file, 
+                                             maxBytes=1024 * 1024,  # 1MB
+                                             backupCount=10,
+                                             delay=True)  # Ouverture différée du fichier
+            file_handler.setFormatter(logging.Formatter(
+                '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+            ))
+            file_handler.setLevel(logging.INFO)
+            app.logger.addHandler(file_handler)
+            app.logger.setLevel(logging.INFO)
+        except PermissionError:
+            print("Warning: Cannot write to log file, logging to console only")
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
+            app.logger.addHandler(console_handler)
+        
         app.logger.info('Toolbox startup')
 
     # Blueprints

@@ -6,7 +6,7 @@ Flask-WTF==1.2.1
 
 # Gestion des médias
 Pillow==10.2.0
-ffmpeg-python==0.2.0
+python-ffmpeg==2.0.12
 
 # YouTube downloader
 yt-dlp==2025.01.26

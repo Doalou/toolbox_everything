@@ -1,14 +1,12 @@
 from flask import Blueprint, request, jsonify, send_file, render_template, current_app
-from PIL import Image
 import io
 import os
-import zipfile
-import ffmpeg
 import uuid
+import subprocess
 from werkzeug.utils import secure_filename
-from app.services.common.utils import log_message, ensure_dir, create_unique_filename
+from PIL import Image
 
-media_bp = Blueprint("media", __name__)  # Renommé de images_bp à media_bp
+media_bp = Blueprint("media", __name__)
 
 @media_bp.route("/")
 def index():
@@ -39,74 +37,142 @@ def process_image(img, output_format, quality=85):
     except Exception as e:
         raise ValueError(f"Erreur lors du traitement de l'image: {str(e)}")
 
-def process_video(input_path, output_format, quality=85):
-    """Fonction pour convertir une vidéo"""
+def process_video(input_path, output_path, quality=85):
+    """Version simplifiée et robuste de la conversion vidéo"""
     try:
-        # Utiliser un nom de fichier unique basé sur UUID pour éviter les conflits
-        unique_filename = str(uuid.uuid4())
-        output_path = os.path.join(
-            current_app.config['UPLOAD_FOLDER'], 
-            'temp', 
-            f"{unique_filename}.{output_format}"
+        # Vérification de FFmpeg
+        ffmpeg_path = current_app.config.get('FFMPEG_PATH')
+        if not ffmpeg_path or not os.path.exists(ffmpeg_path):
+            raise ValueError("FFmpeg n'est pas disponible")
+
+        # Préparation de la commande de base
+        command = [
+            ffmpeg_path,
+            '-i', input_path,
+            '-y',  # Écraser le fichier existant
+        ]
+
+        # Ajout des options de codec selon le format
+        output_format = os.path.splitext(output_path)[1][1:]
+        if output_format == 'mp4':
+            command.extend([
+                '-c:v', 'libx264',
+                '-preset', 'medium',
+                '-crf', '23',
+                '-c:a', 'aac',
+                '-b:a', '128k'
+            ])
+        elif output_format == 'webm':
+            command.extend([
+                '-c:v', 'libvpx-vp9',
+                '-crf', '30',
+                '-b:v', '0',
+                '-c:a', 'libopus'
+            ])
+
+        # Ajout du fichier de sortie
+        command.append(output_path)
+
+        # Exécution de la commande
+        current_app.logger.info(f"Commande FFmpeg: {' '.join(command)}")
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=True
         )
-        
-        # Configuration de la qualité (CRF - Constant Rate Factor)
-        crf = int(28 - (quality/100.0 * 10))  # Convertit 1-100 en 28-18
-        
-        # Configuration codec selon le format de sortie
-        codec_config = {
-            'mp4': {'c:v': 'libx264', 'crf': str(crf), 'preset': 'medium'},
-            'webm': {'c:v': 'libvpx-vp9', 'crf': str(crf), 'b:v': '0'},
-            'avi': {'c:v': 'libx264', 'crf': str(crf)},
-            'mkv': {'c:v': 'libx264', 'crf': str(crf)}
-        }
-        
-        stream = ffmpeg.input(input_path)
-        stream = ffmpeg.output(stream, output_path, **codec_config.get(output_format, {'c:v': 'copy'}))
-        ffmpeg.run(stream, overwrite_output=True)
-        
+
+        if not os.path.exists(output_path):
+            raise ValueError("La conversion n'a pas généré de fichier de sortie")
+
         return output_path
+
+    except subprocess.CalledProcessError as e:
+        current_app.logger.error(f"Erreur FFmpeg: {e.stderr}")
+        raise ValueError(f"Erreur lors de la conversion: {e.stderr}")
     except Exception as e:
-        if os.path.exists(output_path):
+        current_app.logger.error(f"Erreur: {str(e)}")
+        raise
+
+class ResourceManager:
+    def __init__(self):
+        self.resources = []
+
+    def add(self, resource):
+        self.resources.append(resource)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for resource in self.resources:
             try:
-                os.remove(output_path)
-            except:
-                pass
-        raise ValueError(f"Erreur lors de la conversion vidéo: {str(e)}")
+                if os.path.exists(resource):
+                    os.remove(resource)
+            except Exception as e:
+                current_app.logger.error(f"Erreur lors du nettoyage de {resource}: {str(e)}")
 
 @media_bp.route("/convert", methods=["POST"])
 def convert_media():
     if 'file' not in request.files:
         return jsonify({'error': 'Fichier manquant'}), 400
-        
-    file = request.files['file']
-    if not file.filename:
-        return jsonify({'error': 'Nom de fichier manquant'}), 400
-        
-    filename = secure_filename(file.filename)
-    output_format = request.form.get('format', 'webp').lower()
-    quality = int(request.form.get('quality', current_app.config['DEFAULT_QUALITY']))
-    
-    try:
-        with ResourceManager() as rm:
-            temp_path = create_unique_filename(filename, current_app.config['TEMP_FOLDER'])
-            rm.add(temp_path)
-            file.save(temp_path)
-            
-            if is_video(filename):
-                output_path = process_video(temp_path, output_format, quality)
-                rm.add(output_path)
-            else:
-                img = Image.open(temp_path)
-                output = process_image(img, output_format.upper(), quality)
-                return send_file(output, mimetype=f'image/{output_format}', 
-                               as_attachment=True, download_name=f"converted_{filename}")
 
-        return send_file(output_path, mimetype=f'video/{output_format}', 
-                        as_attachment=True, download_name=f"converted_{filename}")
-                        
+    file = request.files['file']
+    if not file or not file.filename:
+        return jsonify({'error': 'Fichier invalide'}), 400
+
+    try:
+        # Création du dossier temporaire
+        temp_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Préparation des fichiers
+        input_filename = secure_filename(file.filename)
+        output_format = request.form.get('format', '').lower()
+        quality = int(request.form.get('quality', 85))
+
+        # Génération des chemins
+        input_path = os.path.join(temp_dir, f"input_{uuid.uuid4()}_{input_filename}")
+        output_path = os.path.join(temp_dir, f"output_{uuid.uuid4()}.{output_format}")
+
+        # Sauvegarde du fichier d'entrée
+        file.save(input_path)
+        current_app.logger.info(f"Fichier reçu: {input_path}")
+
+        try:
+            if is_video(file.filename):
+                # Conversion vidéo
+                current_app.logger.info(f"Début conversion vidéo: {input_path} -> {output_path}")
+                result_path = process_video(input_path, output_path, quality)
+                response = send_file(
+                    result_path,
+                    as_attachment=True,
+                    download_name=f"converted_{os.path.splitext(input_filename)[0]}.{output_format}"
+                )
+            else:
+                # Conversion image
+                img = Image.open(input_path)
+                output = process_image(img, output_format.upper(), quality)
+                response = send_file(
+                    output,
+                    mimetype=f'image/{output_format.lower()}',
+                    as_attachment=True,
+                    download_name=f"converted_{os.path.splitext(input_filename)[0]}.{output_format}"
+                )
+
+            return response
+
+        finally:
+            # Nettoyage
+            for path in [input_path, output_path]:
+                if os.path.exists(path):
+                    try:
+                        os.remove(path)
+                    except Exception as e:
+                        current_app.logger.error(f"Erreur de nettoyage {path}: {str(e)}")
+
     except Exception as e:
-        current_app.logger.error(f'Erreur de conversion: {str(e)}')
+        current_app.logger.error(f"Erreur de conversion: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @media_bp.route("/batch", methods=["POST"])

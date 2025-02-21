@@ -53,8 +53,9 @@
                                 <i class="fas fa-video mr-2"></i>Télécharger en Vidéo
                             </h3>
                             <select id="videoQuality" 
-                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-center">
                                 <option value="highest">Meilleure qualité</option>
+                                <option value="1080p">1080p</option>
                                 <option value="720p">720p</option>
                                 <option value="480p">480p</option>
                                 <option value="360p">360p</option>
@@ -105,6 +106,7 @@
 
 <script>
 let currentTaskId = null;
+let abortController = null;
 
 document.getElementById('urlForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -135,30 +137,55 @@ async function downloadVideo(format) {
     const quality = document.getElementById('videoQuality').value;
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
+    
+    if (abortController) {
+        abortController.abort();
+    }
+    abortController = new AbortController();
 
     try {
         document.getElementById('progressOverlay').classList.remove('hidden');
         progressBar.style.width = '0%';
         progressText.textContent = 'Démarrage du téléchargement...';
 
-        const response = await fetch(`/youtube/download?url=${encodeURIComponent(url)}&format=${format}&quality=${quality}`);
-        if (!response.ok) throw new Error('Erreur lors du téléchargement');
+        const response = await fetch('/youtube/download', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                url: url,
+                format: format,
+                quality: quality
+            }),
+            signal: abortController.signal
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erreur lors du téléchargement');
+        }
 
         const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
+        const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `download.${format === 'audio' ? 'mp3' : 'mp4'}`;
+        a.href = downloadUrl;
+        a.download = `video.${format === 'audio' ? 'mp3' : 'mp4'}`;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(downloadUrl);
         document.body.removeChild(a);
 
         showNotification('Téléchargement terminé !', 'success');
     } catch (error) {
-        showNotification(error.message, 'error');
+        if (error.name === 'AbortError') {
+            showNotification('Téléchargement annulé', 'info');
+        } else {
+            showNotification(error.message, 'error');
+        }
     } finally {
         document.getElementById('progressOverlay').classList.add('hidden');
+        abortController = null;
     }
 }
 
@@ -175,10 +202,8 @@ function formatNumber(num) {
 }
 
 function cancelDownload() {
-    if (currentTaskId) {
-        // Implement cancel logic here
-        showNotification('Téléchargement annulé', 'info');
-        document.getElementById('progressOverlay').classList.add('hidden');
+    if (abortController) {
+        abortController.abort();
     }
 }
 </script>

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, send_file, jsonify, render_template, current_app, after_this_request
 import os
 import uuid
+import ffmpeg
 from werkzeug.utils import secure_filename
 from app.services.common.utils import ensure_dir
 from yt_dlp import YoutubeDL
@@ -13,13 +14,50 @@ def index():
 
 def get_format_string(quality: str) -> str:
     """Helper pour obtenir le format string selon la qualité"""
+    # Format plus précis pour une meilleure qualité
     formats = {
-        'highest': 'bestvideo+bestaudio/best',
-        '720p': 'bestvideo[height<=720]+bestaudio/best[height<=720]',
-        '480p': 'bestvideo[height<=480]+bestaudio/best[height<=480]',
-        '360p': 'bestvideo[height<=360]+bestaudio/best[height<=360]'
+        'highest': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        '1080p': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]',
+        '720p': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]',
+        '480p': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]',
+        '360p': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]'
     }
-    return formats.get(quality, 'bestvideo+bestaudio/best')
+    return formats.get(quality, formats['highest'])
+
+def create_ydl_opts(format_type: str, quality: str, output_path: str, ffmpeg_path: str) -> dict:
+    """Crée les options yt-dlp optimisées"""
+    ydl_opts = {
+        "outtmpl": output_path,
+        "format": "bestaudio/best" if format_type == "audio" else get_format_string(quality),
+        "ffmpeg_location": ffmpeg_path,
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "progress_hooks": [],
+        "postprocessor_hooks": [],
+        "merge_output_format": "mp4"
+    }
+
+    if format_type == "audio":
+        ydl_opts.update({
+            "postprocessors": [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+                'nopostoverwrites': False,
+            }],
+            "format": "bestaudio/best",
+            "extractaudio": True
+        })
+    else:
+        ydl_opts.update({
+            "postprocessors": [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp4',
+            }]
+        })
+
+    return ydl_opts
 
 @youtube_bp.route("/download", methods=["GET"])
 def download_youtube_video():
@@ -122,30 +160,60 @@ def get_video_info():
             return jsonify({"error": "La vidéo n'est pas accessible"}), 400
         return jsonify({"error": f"Erreur : {error_msg}"}), 500
 
+def safe_remove_file(filepath):
+    """Supprime un fichier en toute sécurité"""
+    try:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors de la suppression de {filepath}: {str(e)}")
+
 @youtube_bp.route('/download', methods=['POST'])
 def download_video():
-    url = request.json.get('url')
-    format = request.json.get('format', 'mp4')
-    
-    if not url:
-        return jsonify({'error': 'No URL provided'}), 400
-        
-    download_path = current_app.config['YOUTUBE_DOWNLOAD_FOLDER']
-    
-    ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
-        'max_duration': current_app.config['YOUTUBE_MAX_DURATION']
-    }
+    ffmpeg_path = current_app.config.get('FFMPEG_PATH')
+    if not ffmpeg_path or not os.path.exists(ffmpeg_path):
+        return jsonify({"error": "FFmpeg non trouvé"}), 500
+
+    data = request.get_json()
+    if not data or 'url' not in data:
+        return jsonify({"error": "URL manquante"}), 400
+
+    temp_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_youtube')
+    ensure_dir(temp_dir)
     
     try:
+        format_type = data.get('format', 'video')
+        quality = data.get('quality', 'highest')
+        output_template = os.path.join(temp_dir, f"{uuid.uuid4()}.%(ext)s")
+        
+        ydl_opts = create_ydl_opts(format_type, quality, output_template, ffmpeg_path)
+        
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            return jsonify({
-                'status': 'success',
-                'title': info['title'],
-                'filename': f"{info['title']}.{info['ext']}"
-            })
+            # Téléchargement et conversion
+            info = ydl.extract_info(data['url'], download=True)
+            if not info:
+                return jsonify({"error": "Impossible d'obtenir la vidéo"}), 400
+
+            # Détermination du fichier de sortie
+            output_file = ydl.prepare_filename(info)
+            if format_type == "audio":
+                base = os.path.splitext(output_file)[0]
+                output_file = f"{base}.mp3"
+
+            if not os.path.exists(output_file):
+                return jsonify({"error": "Fichier de sortie non trouvé"}), 500
+
+            return send_file(
+                output_file,
+                as_attachment=True,
+                download_name=f"{secure_filename(info['title'])}.{'mp3' if format_type == 'audio' else 'mp4'}"
+            )
+
     except Exception as e:
-        current_app.logger.error(f'Error downloading video: {str(e)}')
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Erreur de téléchargement: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        # Nettoyage des fichiers temporaires
+        for f in os.listdir(temp_dir):
+            safe_remove_file(os.path.join(temp_dir, f))
