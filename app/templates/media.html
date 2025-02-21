@@ -86,7 +86,7 @@
                         <select name="format" 
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-600 
                                        dark:bg-gray-700 dark:text-white transition-colors
-                                       focus:border-primary-500 focus:ring-primary-500">
+                                       focus:border-primary-500 focus:ring-primary-500 text-center justify-center">
                             <optgroup label="Images">
                                 <option value="jpeg">JPEG</option>
                                 <option value="png">PNG</option>
@@ -182,12 +182,12 @@ function updateFileList() {
     fileList.innerHTML = '';
     selectedFiles.forEach((file, index) => {
         const div = document.createElement('div');
-        div.className = 'relative group';
+        div.className = 'relative group text-center'; // Ajout de text-center ici
         div.innerHTML = `
             <div class="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                 ${file.type.startsWith('image/') 
                     ? `<img src="${URL.createObjectURL(file)}" class="object-cover w-full h-full">` 
-                    : `<div class="flex items-center justify-center h-full text-center">
+                    : `<div class="flex items-center justify-center h-full">
                         <i class="fas fa-video text-2xl text-gray-400"></i>
                        </div>`}
             </div>

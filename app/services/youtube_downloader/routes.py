@@ -5,6 +5,8 @@ import ffmpeg
 from werkzeug.utils import secure_filename
 from app.services.common.utils import ensure_dir
 from yt_dlp import YoutubeDL
+import re
+import unicodedata
 
 youtube_bp = Blueprint("youtube", __name__)
 
@@ -27,15 +29,14 @@ def get_format_string(quality: str) -> str:
 def create_ydl_opts(format_type: str, quality: str, output_path: str, ffmpeg_path: str) -> dict:
     """Crée les options yt-dlp optimisées"""
     ydl_opts = {
-        "outtmpl": output_path,
+        "outtmpl": "%(title)s.%(ext)s",  # Format du nom de fichier
         "format": "bestaudio/best" if format_type == "audio" else get_format_string(quality),
         "ffmpeg_location": ffmpeg_path,
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
         "progress_hooks": [],
-        "postprocessor_hooks": [],
-        "merge_output_format": "mp4"
+        "postprocessor_hooks": []
     }
 
     if format_type == "audio":
@@ -51,6 +52,7 @@ def create_ydl_opts(format_type: str, quality: str, output_path: str, ffmpeg_pat
         })
     else:
         ydl_opts.update({
+            "merge_output_format": "mp4",
             "postprocessors": [{
                 'key': 'FFmpegVideoConvertor',
                 'preferedformat': 'mp4',
@@ -168,6 +170,18 @@ def safe_remove_file(filepath):
     except Exception as e:
         current_app.logger.error(f"Erreur lors de la suppression de {filepath}: {str(e)}")
 
+def sanitize_filename(filename):
+    """Nettoie le nom de fichier en supprimant les caractères spéciaux et non-ASCII"""
+    # Remplace les caractères non-ASCII par leurs équivalents ASCII
+    filename = unicodedata.normalize('NFKD', filename)
+    filename = filename.encode('ASCII', 'ignore').decode('ASCII')
+    
+    # Supprime les caractères spéciaux et remplace les espaces par des underscores
+    filename = re.sub(r'[^\w\s-]', '', filename)
+    filename = re.sub(r'[-\s]+', '_', filename)
+    
+    return filename.strip('_')
+
 @youtube_bp.route('/download', methods=['POST'])
 def download_video():
     ffmpeg_path = current_app.config.get('FFMPEG_PATH')
@@ -184,29 +198,58 @@ def download_video():
     try:
         format_type = data.get('format', 'video')
         quality = data.get('quality', 'highest')
-        output_template = os.path.join(temp_dir, f"{uuid.uuid4()}.%(ext)s")
+        temp_filename = f"{uuid.uuid4()}"
+        output_template = os.path.join(temp_dir, f"{temp_filename}.%(ext)s")
         
-        ydl_opts = create_ydl_opts(format_type, quality, output_template, ffmpeg_path)
-        
+        ydl_opts = {
+            "outtmpl": output_template,
+            "format": "bestaudio/best" if format_type == "audio" else get_format_string(quality),
+            "ffmpeg_location": ffmpeg_path,
+            "quiet": True,
+            "no_warnings": True,
+            "noplaylist": True
+        }
+
+        if format_type == "audio":
+            ydl_opts.update({
+                "postprocessors": [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+                "extractaudio": True
+            })
+        else:
+            ydl_opts.update({
+                "merge_output_format": "mp4",
+            })
+
         with YoutubeDL(ydl_opts) as ydl:
-            # Téléchargement et conversion
             info = ydl.extract_info(data['url'], download=True)
             if not info:
                 return jsonify({"error": "Impossible d'obtenir la vidéo"}), 400
 
-            # Détermination du fichier de sortie
-            output_file = ydl.prepare_filename(info)
+            # Déterminer le fichier de sortie
             if format_type == "audio":
-                base = os.path.splitext(output_file)[0]
-                output_file = f"{base}.mp3"
+                output_file = os.path.join(temp_dir, f"{temp_filename}.mp3")
+            else:
+                output_file = os.path.join(temp_dir, f"{temp_filename}.mp4")
 
             if not os.path.exists(output_file):
                 return jsonify({"error": "Fichier de sortie non trouvé"}), 500
 
+            safe_title = sanitize_filename(info['title'])
+            download_name = f"{safe_title}.{'mp3' if format_type == 'audio' else 'mp4'}"
+
+            @after_this_request
+            def cleanup(response):
+                safe_remove_file(output_file)
+                return response
+
             return send_file(
                 output_file,
                 as_attachment=True,
-                download_name=f"{secure_filename(info['title'])}.{'mp3' if format_type == 'audio' else 'mp4'}"
+                download_name=download_name
             )
 
     except Exception as e:
