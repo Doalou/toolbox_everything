@@ -2,6 +2,7 @@ import os
 from typing import Set, Dict, Any, Optional
 from dataclasses import dataclass
 import shutil
+import subprocess
 
 @dataclass
 class Config:
@@ -15,26 +16,33 @@ class Config:
     YOUTUBE_DOWNLOAD_FOLDER: str = os.path.join(BASE_DIR, "downloads")
     YOUTUBE_MAX_DURATION: int = 3600
     LOG_FILE: str = os.path.join(BASE_DIR, "logs", "toolbox.log")
-    CLEANUP_INTERVAL: int = 1800  # 30 minutes
+    CLEANUP_INTERVAL: int = 1800
     MAX_BATCH_SIZE: int = 20
     DEFAULT_QUALITY: int = 85
-    CHUNK_SIZE: int = 8192  # Taille optimale pour la lecture/écriture de fichiers
-    FFMPEG_PATH: str = os.path.join(BASE_DIR, "bin", "ffmpeg.exe")
+    CHUNK_SIZE: int = 8192
+    FFMPEG_PATH: str = 'C:/ffmpeg/bin/ffmpeg.exe'
     
     @classmethod
     def get_ffmpeg_path(cls) -> Optional[str]:
         """Retourne le chemin vers FFmpeg"""
         paths_to_check = [
+            'C:/ffmpeg/bin/ffmpeg.exe',  # Chemin Windows standard
             os.path.join(cls.BASE_DIR, "bin", "ffmpeg.exe"),
-            os.path.join('C:', 'ffmpeg', 'bin', 'ffmpeg.exe'),
+            os.path.join('C:', os.sep, 'ffmpeg', 'bin', 'ffmpeg.exe'),
             'ffmpeg'
         ]
         
+        # Vérification directe des chemins
         for path in paths_to_check:
             if os.path.isfile(path):
-                return path
+                return path.replace('/', os.sep)
                 
-        return shutil.which('ffmpeg')  # Chercher dans le PATH
+        # Recherche dans le PATH système
+        system_ffmpeg = shutil.which('ffmpeg')
+        if system_ffmpeg:
+            return system_ffmpeg
+
+        return None
 
     @classmethod
     def validate_ffmpeg(cls) -> bool:
@@ -60,7 +68,7 @@ class Config:
             cls.TEMP_FOLDER,
             cls.YOUTUBE_DOWNLOAD_FOLDER,
             os.path.dirname(cls.LOG_FILE),
-            os.path.join(cls.BASE_DIR, "bin")  # Dossier pour les binaires
+            os.path.join(cls.BASE_DIR, "bin")
         ]
         
         for directory in required_dirs:

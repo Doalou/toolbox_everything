@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-gray-50 dark:bg-gray-900">
+<html lang="fr" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,11 +11,6 @@
             theme: {
                 extend: {
                     colors: {
-                        dark: {
-                            100: '#1a1a1a',
-                            200: '#2d2d2d',
-                            300: '#404040'
-                        },
                         primary: {
                             50: '#f0f9ff',
                             100: '#e0f2fe',
@@ -33,21 +28,20 @@
                         'gradient': 'gradient 8s linear infinite',
                         'float': 'float 6s ease-in-out infinite',
                         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out',
                     },
                     keyframes: {
                         gradient: {
-                            '0%, 100%': {
-                                'background-size': '200% 200%',
-                                'background-position': 'left center'
-                            },
-                            '50%': {
-                                'background-size': '200% 200%',
-                                'background-position': 'right center'
-                            }
+                            '0%, 100%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' }
                         },
                         float: {
                             '0%, 100%': { transform: 'translateY(0)' },
                             '50%': { transform: 'translateY(-10px)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
                         }
                     }
                 }
@@ -55,100 +49,199 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-    <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-        <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 backdrop-blur-sm bg-opacity-80 dark:bg-opacity-80">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-700">
+    <!-- Loader initial -->
+    <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-700">
+        <div class="animate-spin text-primary-600 text-4xl">
+            <i class="fas fa-circle-notch"></i>
+        </div>
+    </div>
+
+    <div class="min-h-screen flex flex-col opacity-0 transition-opacity duration-700" id="mainContent">
+        <!-- Navbar avec effet glassmorphism -->
+        <nav class="sticky top-0 z-40 backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-b border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
-                        <a href="{{ url_for('index') }}" class="flex items-center space-x-3 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-all">
-                            <i class="fas fa-tools text-2xl"></i>
+                        <a href="{{ url_for('index') }}" class="flex items-center space-x-3 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-all duration-300">
+                            <i class="fas fa-tools text-2xl transform hover:rotate-12 transition-transform"></i>
                             <span class="text-xl font-bold">Toolbox Everything</span>
                         </a>
                     </div>
-                    <div class="flex items-center space-x-6">
-                        <a href="{{ url_for('youtube.index') }}" class="nav-link text-gray-600 dark:text-gray-100">
-                            <i class="fab fa-youtube mr-2"></i>YouTube
+
+                    <!-- Menu Mobile -->
+                    <div class="flex items-center md:hidden">
+                        <button id="menuButton" 
+                                class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
+                                       transition-colors focus:outline-none focus:ring-2 
+                                       focus:ring-primary-500">
+                            <i class="fas fa-bars text-gray-600 dark:text-gray-300 text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Menu Desktop -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="{{ url_for('youtube.index') }}" 
+                           class="nav-link group flex items-center text-gray-800 dark:text-white">
+                            <i class="fab fa-youtube mr-2 text-red-500"></i>
+                            <span>YouTube</span>
                         </a>
-                        <a href="{{ url_for('media.index') }}" class="nav-link text-gray-600 dark:text-gray-100">
-                            <i class="far fa-images mr-2"></i>Conversion
+                        <a href="{{ url_for('media.index') }}" 
+                           class="nav-link group flex items-center text-gray-800 dark:text-white">
+                            <i class="far fa-images mr-2 text-primary-500"></i>
+                            <span>Conversion</span>
                         </a>
-                        <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                            <i class="fas fa-moon text-gray-600 dark:text-gray-400 dark:hidden"></i>
-                            <i class="fas fa-sun text-gray-400 hidden dark:block dark:text-gray-300"></i>
+                        <button onclick="toggleTheme()" 
+                                class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <i class="fas fa-moon text-gray-600 dark:text-gray-400 dark:hidden transform hover:rotate-12 transition-transform"></i>
+                            <i class="fas fa-sun text-gray-400 hidden dark:block dark:text-gray-300 transform hover:rotate-90 transition-transform"></i>
                         </button>
                     </div>
                 </div>
             </div>
+
+            <!-- Menu Mobile (Panel) -->
+            <div id="mobileMenu" 
+                 class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 
+                        bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg">
+                <div class="px-4 pt-2 pb-3 space-y-1">
+                    <a href="{{ url_for('youtube.index') }}" 
+                       class="block px-3 py-2 rounded-md text-base font-medium 
+                              text-gray-700 dark:text-gray-300 hover:bg-gray-100 
+                              dark:hover:bg-gray-700 transition-colors">
+                        <i class="fab fa-youtube mr-2 text-red-500"></i>
+                        YouTube
+                    </a>
+                    <a href="{{ url_for('media.index') }}" 
+                       class="block px-3 py-2 rounded-md text-base font-medium 
+                              text-gray-700 dark:text-gray-300 hover:bg-gray-100 
+                              dark:hover:bg-gray-700 transition-colors">
+                        <i class="far fa-images mr-2 text-primary-500"></i>
+                        Conversion
+                    </a>
+                    <button onclick="toggleTheme()" 
+                            class="w-full text-left px-3 py-2 rounded-md text-base 
+                                   font-medium text-gray-700 dark:text-gray-300 
+                                   hover:bg-gray-100 dark:hover:bg-gray-700 
+                                   transition-colors">
+                        <i class="fas fa-moon mr-2 dark:hidden"></i>
+                        <i class="fas fa-sun mr-2 hidden dark:inline-block"></i>
+                        <span class="dark:hidden">Mode sombre</span>
+                        <span class="hidden dark:inline-block">Mode clair</span>
+                    </button>
+                </div>
+            </div>
         </nav>
 
-        <main class="flex-grow bg-gray-50 dark:bg-gray-900">
+        <!-- Contenu principal avec animation de fade-in -->
+        <main class="flex-grow animate-fade-in">
             <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 {% block content %}{% endblock %}
             </div>
         </main>
 
-        <footer class="mt-auto bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <!-- Footer amélioré -->
+        <footer class="mt-auto border-t border-gray-200/50 dark:border-gray-700/50 backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 transition-all duration-300">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-center space-x-6">
-                    <a href="#" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
-                        <i class="fab fa-github text-xl"></i>
+                    <a href="#" class="social-link" aria-label="GitHub">
+                        <i class="fab fa-github text-xl text-gray-800 dark:text-white"></i>
                     </a>
-                    <a href="#" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
-                        <i class="fab fa-twitter text-xl"></i>
+                    <a href="#" class="social-link" aria-label="Twitter">
+                        <i class="fab fa-twitter text-xl text-gray-800 dark:text-white"></i>
                     </a>
                 </div>
                 <p class="mt-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                    © 2024 Toolbox Everything
+                    © 2024 Doalo
                 </p>
             </div>
         </footer>
     </div>
 
-    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <!-- Zone de notifications -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
 
-    <script>
-        // Amélioration de la gestion du thème
-        function toggleTheme() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.theme = 'light';
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.theme = 'dark';
-            }
+    <style>
+        /* Styles de base */
+        .nav-link {
+            @apply relative px-3 py-2 hover:text-primary-600 
+                   dark:hover:text-primary-400 transition-all duration-300;
         }
 
-        // Détection automatique du thème système
+        .nav-link::after {
+            @apply content-[''] absolute left-0 right-0 bottom-0 h-0.5 bg-primary-500 
+                   scale-x-0 transition-transform duration-300 origin-left;
+        }
+
+        .nav-link:hover::after {
+            @apply scale-x-100;
+        }
+
+        /* Style pour les liens sociaux */
+        .social-link {
+            @apply transition-all duration-300 transform hover:scale-110 hover:text-primary-500 
+                   dark:hover:text-primary-400;
+        }
+
+        /* Animation de gradient en arrière-plan */
+        .bg-gradient-animate {
+            background-size: 200% 200%;
+            animation: gradient 8s linear infinite;
+        }
+    </style>
+
+    <script>
+        // Gestion améliorée du thème
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            
+            html.classList.toggle('dark');
+            localStorage.theme = isDark ? 'light' : 'dark';
+
+            // Animation de transition
+            document.body.style.opacity = '0';
+            setTimeout(() => document.body.style.opacity = '1', 50);
+        }
+
+        // Initialisation du thème
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         }
 
-        // Animation de transition au chargement
-        document.addEventListener('DOMContentLoaded', () => {
-            document.body.style.opacity = '0';
-            requestAnimationFrame(() => {
-                document.body.style.transition = 'opacity 0.5s ease-in-out';
-                document.body.style.opacity = '1';
+        // Gestion du loader
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            const mainContent = document.getElementById('mainContent');
+            
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                mainContent.style.opacity = '1';
+                setTimeout(() => loader.style.display = 'none', 700);
+            }, 500);
+        });
+
+        // Ajout de la gestion du menu mobile
+        const menuButton = document.getElementById('menuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            // Animation du bouton
+            const icon = menuButton.querySelector('i');
+            icon.classList.toggle('fa-bars');
+            icon.classList.toggle('fa-times');
+        });
+
+        // Fermer le menu mobile lors du clic sur un lien
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                menuButton.querySelector('i').classList.add('fa-bars');
+                menuButton.querySelector('i').classList.remove('fa-times');
             });
         });
     </script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-    <style>
-        .nav-link {
-            @apply relative px-3 py-2 hover:text-primary-600 
-                   dark:hover:text-gray-300 transition-colors duration-200;
-        }
-        .nav-link::after {
-            @apply content-[''] absolute left-0 right-0 bottom-0 h-0.5 bg-primary-500 
-                   dark:bg-gray-100 scale-x-0 transition-transform duration-200;
-        }
-        .nav-link:hover::after {
-            @apply scale-x-100;
-        }
-    </style>
 </body>
 </html>

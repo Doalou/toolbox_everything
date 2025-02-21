@@ -10,7 +10,7 @@ media_bp = Blueprint("media", __name__)
 
 @media_bp.route("/")
 def index():
-    return render_template('media.html')  # Mise à jour du nom du template
+    return render_template('media.html')
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -49,7 +49,7 @@ def process_video(input_path, output_path, quality=85):
         command = [
             ffmpeg_path,
             '-i', input_path,
-            '-y',  # Écraser le fichier existant
+            '-y',
         ]
 
         # Ajout des options de codec selon le format
