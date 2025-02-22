@@ -1,0 +1,608 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- En-tête avec stats et recherche -->
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
+        <div class="flex-1">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Outils Essentiels</h1>
+            <p class="text-gray-600 dark:text-gray-400">Une collection d'outils pratiques pour vos besoins quotidiens</p>
+        </div>
+        
+        <!-- Barre de recherche et filtres -->
+        <div class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+            <div class="relative flex-1 lg:flex-none lg:w-64">
+                <input type="text" id="toolSearch" placeholder="Rechercher un outil..."
+                       class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 
+                              dark:bg-gray-700/50 dark:text-white focus:ring-2 focus:ring-primary-500">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 sm:mx-0 px-4 sm:px-0">
+                <button data-category="all" 
+                        class="category-btn active whitespace-nowrap px-4 py-2.5 rounded-xl 
+                               bg-primary-600 text-white font-medium">
+                    <i class="fas fa-th-large mr-2"></i>Tous
+                </button>
+                <button data-category="security" 
+                        class="category-btn whitespace-nowrap px-4 py-2.5 rounded-xl bg-gray-100 
+                               dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+                    <i class="fas fa-shield-alt mr-2 text-green-500"></i>Sécurité
+                </button>
+                <button data-category="conversion" 
+                        class="category-btn whitespace-nowrap px-4 py-2.5 rounded-xl bg-gray-100 
+                               dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+                    <i class="fas fa-exchange-alt mr-2 text-blue-500"></i>Conversion
+                </button>
+                <button data-category="image" 
+                        class="category-btn whitespace-nowrap px-4 py-2.5 rounded-xl bg-gray-100 
+                               dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+                    <i class="fas fa-image mr-2 text-purple-500"></i>Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grille d'outils -->
+    <div id="toolsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Générateur de mot de passe -->
+        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="security">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900 mr-3">
+                        <i class="fas fa-key text-2xl text-primary-600 dark:text-primary-400"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Générateur de mot de passe</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <input type="number" id="pwdLength" value="12" min="8" max="64" 
+                               class="w-20 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-center input-padding">
+                        <button onclick="generatePassword()" 
+                                class="flex-1 bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 transition">
+                            Générer
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="generatedPassword" readonly 
+                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white pr-12 input-padding">
+                        <button onclick="copyToClipboard('generatedPassword')" 
+                                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500 transition">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validateur de mot de passe -->
+        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="security">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 dark:bg-green-900 mr-3">
+                        <i class="fas fa-shield-alt text-2xl text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Validateur de mot de passe</h2>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="passwordToValidate"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                  dark:bg-gray-700 dark:text-white input-padding"
+                           placeholder="Entrez un mot de passe">
+                    <div id="passwordStrength" class="text-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculateur de Hash -->
+        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="security">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 mr-3">
+                        <i class="fas fa-hashtag text-2xl text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Calculateur de Hash</h2>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="textToHash"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                  dark:bg-gray-700 dark:text-white input-padding"
+                           placeholder="Texte à hasher">
+                    <select id="hashAlgorithm"
+                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                   dark:bg-gray-700 dark:text-white select-padding">
+                        <option value="md5">MD5</option>
+                        <option value="sha1">SHA-1</option>
+                        <option value="sha256" selected>SHA-256</option>
+                        <option value="sha512">SHA-512</option>
+                    </select>
+                    <div class="relative">
+                        <input type="text" id="hashResult" readonly
+                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                      dark:bg-gray-700 dark:text-white pr-12 input-padding">
+                        <button onclick="copyToClipboard('hashResult')"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 
+                                       hover:text-primary-500 transition">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Encodeur/Décodeur Base64 -->
+        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="conversion">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 mr-3">
+                        <i class="fas fa-exchange-alt text-2xl text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Base64</h2>
+                </div>
+                <div class="space-y-4">
+                    <textarea id="base64Input"
+                              class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                     dark:bg-gray-700 dark:text-white h-24 resize-none textarea-padding"
+                              placeholder="Texte à encoder/décoder"></textarea>
+                    <div class="flex gap-2">
+                        <button onclick="handleBase64('encode')"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg 
+                                       px-4 py-2 transition">
+                            Encoder
+                        </button>
+                        <button onclick="handleBase64('decode')"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg 
+                                       px-4 py-2 transition">
+                            Décoder
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <textarea id="base64Result" readonly
+                                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                         dark:bg-gray-700 dark:text-white h-24 resize-none textarea-padding"></textarea>
+                        <button onclick="copyToClipboard('base64Result')"
+                                class="absolute right-2 top-2 text-gray-400 hover:text-primary-500 
+                                       transition">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formateur JSON -->
+        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="conversion">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900 mr-3">
+                        <i class="fas fa-code text-2xl text-amber-600 dark:text-amber-400"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Formateur JSON</h2>
+                </div>
+                <div class="space-y-4">
+                    <textarea id="jsonInput"
+                              class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                     dark:bg-gray-700 dark:text-white h-32 resize-none textarea-padding"
+                              placeholder="JSON à formater"></textarea>
+                    <div class="flex gap-2">
+                        <button onclick="formatJson()"
+                                class="flex-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg 
+                                       px-4 py-2 transition">
+                            Formater
+                        </button>
+                        <button onclick="minifyJson()"
+                                class="flex-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg 
+                                       px-4 py-2 transition">
+                            Minifier
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <textarea id="jsonResult" readonly
+                                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                         dark:bg-gray-700 dark:text-white h-32 resize-none textarea-padding"></textarea>
+                        <button onclick="copyToClipboard('jsonResult')"
+                                class="absolute right-2 top-2 text-gray-400 hover:text-primary-500 
+                                       transition">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upscale Image -->
+        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="image">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 dark:bg-green-900 mr-3">
+                        <i class="fas fa-image text-2xl text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Redimensionner Image</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Sélectionnez une image
+                        </label>
+                        <input type="file" id="imageInput" accept="image/*"
+                               class="w-full text-sm text-gray-500 dark:text-gray-400
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-full file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-primary-50 file:text-primary-700
+                                      dark:file:bg-primary-900 dark:file:text-primary-300
+                                      hover:file:bg-primary-100 dark:hover:file:bg-primary-800">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Largeur
+                            </label>
+                            <input type="number" id="imageWidth" placeholder="Auto"
+                                   class="mt-1 w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                          dark:bg-gray-700 dark:text-white input-padding">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Hauteur
+                            </label>
+                            <input type="number" id="imageHeight" placeholder="Auto"
+                                   class="mt-1 w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                          dark:bg-gray-700 dark:text-white input-padding">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="maintainRatio" checked
+                               class="rounded border-gray-300 text-primary-600 
+                                      focus:ring-primary-500 dark:border-gray-600">
+                        <label class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                            Conserver les proportions
+                        </label>
+                    </div>
+
+                    <button onclick="upscaleImage()"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg 
+                                   px-4 py-2 transition flex items-center justify-center mb-2">
+                        <i class="fas fa-expand-arrows-alt mr-2"></i>
+                        Redimensionner
+                    </button>
+                    <button onclick="resetImageForm()"
+                            class="w-full bg-gray-600 hover:bg-gray-700 text-white rounded-lg 
+                                   px-4 py-2 transition flex items-center justify-center">
+                        <i class="fas fa-trash-alt mr-2"></i>
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tool-card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl 
+           transition-all duration-300 transform hover:-translate-y-1;
+}
+
+.category-btn {
+    @apply transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600;
+}
+
+.category-btn.active {
+    @apply bg-primary-600 text-white shadow-lg hover:bg-primary-700;
+}
+
+.tool-card {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.tool-card.hidden {
+    transform: scale(0.95);
+    opacity: 0;
+}
+
+.btn-loading {
+    @apply relative !pl-8;
+}
+
+.btn-loading::before {
+    content: '';
+    @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 
+           border-white/30 border-t-white rounded-full animate-spin;
+}
+
+.input-padding {
+    @apply px-4 py-3;
+}
+
+.textarea-padding {
+    @apply px-4 py-3;
+}
+
+.select-padding {
+    @apply px-3 py-2.5;
+}
+</style>
+
+<script>
+const categoryButtons = document.querySelectorAll('.category-btn');
+const toolCards = document.querySelectorAll('.tool-card');
+
+function filterTools(category) {
+    toolCards.forEach(card => {
+        const matches = category === 'all' || card.dataset.category === category;
+        card.style.opacity = matches ? '1' : '0';
+        card.style.transform = matches ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(10px)';
+        setTimeout(() => {
+            card.style.display = matches ? 'block' : 'none';
+        }, matches ? 0 : 300);
+    });
+}
+
+categoryButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        categoryButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterTools(btn.dataset.category);
+    });
+});
+
+let searchTimeout;
+toolSearch.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const query = e.target.value.toLowerCase();
+        toolCards.forEach(card => {
+            const title = card.querySelector('h2').textContent.toLowerCase();
+            const matches = title.includes(query);
+            card.style.opacity = matches ? '1' : '0';
+            card.style.transform = matches ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(10px)';
+            setTimeout(() => {
+                card.style.display = matches ? 'block' : 'none';
+            }, matches ? 0 : 300);
+        });
+    }, 200);
+});
+
+function setLoading(button, isLoading) {
+    if (isLoading) {
+        button.classList.add('btn-loading');
+        button.disabled = true;
+    } else {
+        button.classList.remove('btn-loading');
+        button.disabled = false;
+    }
+}
+
+async function generatePassword() {
+    const length = document.getElementById('pwdLength').value;
+    const button = document.querySelector('button[onclick="generatePassword()"]');
+    setLoading(button, true);
+    try {
+        const response = await fetch('/essentials/generate-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ length: parseInt(length) })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('generatedPassword').value = data.password;
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+let passwordDebounce;
+document.getElementById('passwordToValidate').addEventListener('input', (e) => {
+    clearTimeout(passwordDebounce);
+    passwordDebounce = setTimeout(async () => {
+        try {
+            const response = await fetch('/essentials/validate-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: e.target.value })
+            });
+            const data = await response.json();
+            const strengthElement = document.getElementById('passwordStrength');
+            strengthElement.textContent = `Force: ${data.strength}`;
+            strengthElement.className = `text-sm ${getStrengthColor(data.strength)}`;
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    }, 300);
+});
+
+function getStrengthColor(strength) {
+    const colors = {
+        'Très faible': 'text-red-500',
+        'Faible': 'text-orange-500',
+        'Moyen': 'text-yellow-500',
+        'Fort': 'text-green-500',
+        'Très fort': 'text-emerald-500'
+    };
+    return colors[strength] || 'text-gray-500';
+}
+
+document.getElementById('textToHash').addEventListener('input', async (e) => {
+    if (!e.target.value) {
+        document.getElementById('hashResult').value = '';
+        return;
+    }
+    const button = document.querySelector('button[onclick="copyToClipboard(\'hashResult\')"]');
+    setLoading(button, true);
+    try {
+        const algorithm = document.getElementById('hashAlgorithm').value;
+        const response = await fetch('/essentials/calculate-hash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                text: e.target.value,
+                algorithm: algorithm
+            })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('hashResult').value = data.hash;
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+});
+
+async function handleBase64(operation) {
+    const input = document.getElementById('base64Input').value;
+    const button = document.querySelector(`button[onclick="handleBase64('${operation}')"]`);
+    setLoading(button, true);
+    try {
+        const response = await fetch('/essentials/base64', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: input, operation })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('base64Result').value = data.result;
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+async function formatJson() {
+    const input = document.getElementById('jsonInput').value;
+    const button = document.querySelector('button[onclick="formatJson()"]');
+    setLoading(button, true);
+    try {
+        const response = await fetch('/essentials/format-json', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ json: input, indent: 2 })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('jsonResult').value = data.formatted;
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+async function minifyJson() {
+    const input = document.getElementById('jsonInput').value;
+    const button = document.querySelector('button[onclick="minifyJson()"]');
+    setLoading(button, true);
+    try {
+        const response = await fetch('/essentials/minify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: input, language: 'json' })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('jsonResult').value = data.minified;
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    showNotification('Copié dans le presse-papier !', 'success');
+}
+
+async function upscaleImage() {
+    const imageInput = document.getElementById('imageInput');
+    const width = document.getElementById('imageWidth').value;
+    const height = document.getElementById('imageHeight').value;
+    const maintainRatio = document.getElementById('maintainRatio').checked;
+    const button = document.querySelector('button[onclick="upscaleImage()"]');
+    setLoading(button, true);
+
+    if (!imageInput.files || !imageInput.files[0]) {
+        showNotification('Veuillez sélectionner une image', 'error');
+        setLoading(button, false);
+        return;
+    }
+
+    if (!width && !height) {
+        showNotification('Veuillez spécifier au moins une dimension', 'error');
+        setLoading(button, false);
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', imageInput.files[0]);
+    if (width) formData.append('width', width);
+    if (height) formData.append('height', height);
+    formData.append('maintain_ratio', maintainRatio);
+
+    try {
+        const response = await fetch('/essentials/upscale-image', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erreur lors du redimensionnement');
+        }
+
+        // Téléchargement du fichier
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `resized_${imageInput.files[0].name}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showNotification('Image redimensionnée avec succès !', 'success');
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+function resetImageForm() {
+    document.getElementById('imageInput').value = '';
+    document.getElementById('imageWidth').value = '';
+    document.getElementById('imageHeight').value = '';
+    document.getElementById('maintainRatio').checked = true;
+    showNotification('Formulaire réinitialisé', 'success');
+}
+
+const toolSearch = document.getElementById('toolSearch');
+const toolsContainer = document.getElementById('toolsContainer');
+const filterButtons = document.querySelectorAll('button[data-category]');
+
+filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const category = btn.getAttribute('data-category');
+        document.querySelectorAll('.tool-card').forEach(card => {
+            card.style.display = category === 'all' || card.dataset.category === category ? 'block' : 'none';
+        });
+    });
+});
+
+toolSearch.addEventListener('input', () => {
+    const query = toolSearch.value.toLowerCase();
+    document.querySelectorAll('.tool-card').forEach(card => {
+        const title = card.querySelector('h2').textContent.toLowerCase();
+        card.style.display = title.includes(query) ? 'block' : 'none';
+    });
+});
+</script>
+{% endblock %}

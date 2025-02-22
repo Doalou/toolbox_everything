@@ -9,6 +9,7 @@ from logging.handlers import RotatingFileHandler
 from config import Config
 from .youtube_downloader.routes import youtube_bp
 from .media_converter.routes import media_bp
+from .essentials.routes import essentials_bp
 from yt_dlp.postprocessor import FFmpegPostProcessor
 
 def create_app(config_class: Optional[object] = None) -> Flask:
@@ -38,7 +39,7 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     
     # Ajout du chemin FFmpeg à la configuration de l'app
     ffmpeg_path = Config.get_ffmpeg_path()
-    if ffmpeg_path:
+    if (ffmpeg_path):
         app.config['FFMPEG_PATH'] = ffmpeg_path
         FFmpegPostProcessor._ffmpeg_location.set(ffmpeg_path)
     
@@ -73,6 +74,7 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     # Blueprints
     app.register_blueprint(youtube_bp, url_prefix="/youtube")
     app.register_blueprint(media_bp, url_prefix="/media")
+    app.register_blueprint(essentials_bp, url_prefix='/essentials')  # Nouveau blueprint
 
     # Ajouter une route racine pour youtube
     @app.route("/youtube")

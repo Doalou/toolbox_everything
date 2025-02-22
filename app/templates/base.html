@@ -49,7 +49,6 @@
     </script>
     
     <style>
-        /* Base Styles optimisés pour Plus Jakarta Sans */
         body {
             @apply antialiased text-gray-800 dark:text-gray-200 text-[15px];
             -webkit-font-smoothing: antialiased;
@@ -63,14 +62,12 @@
             letter-spacing: -0.02em;
         }
 
-        /* Navigation */
         .nav-link {
             @apply relative px-3 py-2 text-gray-800 dark:text-white 
                    hover:text-primary-600 dark:hover:text-primary-400 
                    transition-all duration-300;
         }
 
-        /* Composants */
         .btn {
             @apply px-4 py-2 rounded-lg font-medium transition-all duration-300
                    focus:outline-none focus:ring-2 focus:ring-primary-500;
@@ -84,7 +81,7 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-700">
+<body class="min-h-screen bg-fixed bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-700">
     <!-- Loader -->
     <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-700">
         <div class="animate-spin text-primary-600 text-4xl">
@@ -116,6 +113,11 @@
 
                     <!-- Menu Desktop -->
                     <div class="hidden md:flex items-center space-x-6">
+                        <a href="{{ url_for('essentials.index') }}" 
+                           class="nav-link group flex items-center text-gray-800 dark:text-white">
+                            <i class="fas fa-tools mr-2 text-amber-500"></i>
+                            <span>Essentiels</span>
+                        </a>
                         <a href="{{ url_for('youtube.index') }}" 
                            class="nav-link group flex items-center text-gray-800 dark:text-white">
                             <i class="fab fa-youtube mr-2 text-red-500"></i>
@@ -135,11 +137,18 @@
                 </div>
             </div>
 
-            <!-- Menu Mobile (Panel) -->
+            <!-- Menu Mobile -->
             <div id="mobileMenu" 
                  class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 
                         bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg">
                 <div class="px-4 pt-2 pb-3 space-y-1">
+                    <a href="{{ url_for('essentials.index') }}" 
+                       class="block px-3 py-2 rounded-md text-base font-medium 
+                              text-gray-700 dark:text-gray-300 hover:bg-gray-100 
+                              dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-tools mr-2 text-amber-500"></i>
+                        Essentiels
+                    </a>
                     <a href="{{ url_for('youtube.index') }}" 
                        class="block px-3 py-2 rounded-md text-base font-medium 
                               text-gray-700 dark:text-gray-300 hover:bg-gray-100 
@@ -197,7 +206,7 @@
     <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
 
     <script>
-        // Theme Management
+        // Theme
         const initTheme = () => {
             if (localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
@@ -211,7 +220,7 @@
             localStorage.theme = isDark ? 'light' : 'dark';
         };
 
-        // Mobile Menu Management
+        // Mobile Menu
         const initMobileMenu = () => {
             const menuButton = document.getElementById('menuButton');
             const mobileMenu = document.getElementById('mobileMenu');
