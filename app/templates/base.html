@@ -4,11 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toolbox Everything</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
+                fontFamily: {
+                    'sans': ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                },
                 extend: {
                     colors: {
                         primary: {
@@ -25,20 +35,9 @@
                         }
                     },
                     animation: {
-                        'gradient': 'gradient 8s linear infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'fade-in': 'fadeIn 0.5s ease-out',
                     },
                     keyframes: {
-                        gradient: {
-                            '0%, 100%': { 'background-position': '0% 50%' },
-                            '50%': { 'background-position': '100% 50%' }
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' }
-                        },
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(-10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' }
@@ -48,10 +47,45 @@
             }
         }
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Base Styles optimisés pour Plus Jakarta Sans */
+        body {
+            @apply antialiased text-gray-800 dark:text-gray-200 text-[15px];
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            letter-spacing: -0.01em;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            @apply font-medium tracking-tight;
+            letter-spacing: -0.02em;
+        }
+
+        /* Navigation */
+        .nav-link {
+            @apply relative px-3 py-2 text-gray-800 dark:text-white 
+                   hover:text-primary-600 dark:hover:text-primary-400 
+                   transition-all duration-300;
+        }
+
+        /* Composants */
+        .btn {
+            @apply px-4 py-2 rounded-lg font-medium transition-all duration-300
+                   focus:outline-none focus:ring-2 focus:ring-primary-500;
+        }
+
+        .social-link {
+            @apply text-gray-800 dark:text-white transition-all duration-300 
+                   transform hover:scale-110 hover:text-primary-500 
+                   dark:hover:text-primary-400;
+        }
+    </style>
 </head>
+
 <body class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-700">
-    <!-- Loader initial -->
+    <!-- Loader -->
     <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-700">
         <div class="animate-spin text-primary-600 text-4xl">
             <i class="fas fa-circle-notch"></i>
@@ -59,8 +93,8 @@
     </div>
 
     <div class="min-h-screen flex flex-col opacity-0 transition-opacity duration-700" id="mainContent">
-        <!-- Navbar avec effet glassmorphism -->
-        <nav class="sticky top-0 z-40 backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-b border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
+        <!-- Navbar -->
+        <nav class="sticky top-0 z-40 backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-b border-gray-200/50 dark:border-gray-700/50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
@@ -134,15 +168,15 @@
             </div>
         </nav>
 
-        <!-- Contenu principal avec animation de fade-in -->
+        <!-- Main Content -->
         <main class="flex-grow animate-fade-in">
             <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 {% block content %}{% endblock %}
             </div>
         </main>
 
-        <!-- Footer amélioré -->
-        <footer class="mt-auto border-t border-gray-200/50 dark:border-gray-700/50 backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 transition-all duration-300">
+        <!-- Footer -->
+        <footer class="mt-auto border-t border-gray-200/50 dark:border-gray-700/50 backdrop-blur-lg bg-white/80 dark:bg-gray-800/80">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-center space-x-6">
                     <a href="#" class="social-link" aria-label="GitHub">
@@ -159,88 +193,59 @@
         </footer>
     </div>
 
-    <!-- Zone de notifications -->
+    <!-- Notifications -->
     <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
 
-    <style>
-        /* Styles de base */
-        .nav-link {
-            @apply relative px-3 py-2 hover:text-primary-600 
-                   dark:hover:text-primary-400 transition-all duration-300;
-        }
-
-        .nav-link::after {
-            @apply content-[''] absolute left-0 right-0 bottom-0 h-0.5 bg-primary-500 
-                   scale-x-0 transition-transform duration-300 origin-left;
-        }
-
-        .nav-link:hover::after {
-            @apply scale-x-100;
-        }
-
-        /* Style pour les liens sociaux */
-        .social-link {
-            @apply transition-all duration-300 transform hover:scale-110 hover:text-primary-500 
-                   dark:hover:text-primary-400;
-        }
-
-        /* Animation de gradient en arrière-plan */
-        .bg-gradient-animate {
-            background-size: 200% 200%;
-            animation: gradient 8s linear infinite;
-        }
-    </style>
-
     <script>
-        // Gestion améliorée du thème
-        function toggleTheme() {
+        // Theme Management
+        const initTheme = () => {
+            if (localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        };
+
+        const toggleTheme = () => {
             const html = document.documentElement;
             const isDark = html.classList.contains('dark');
-            
             html.classList.toggle('dark');
             localStorage.theme = isDark ? 'light' : 'dark';
+        };
 
-            // Animation de transition
-            document.body.style.opacity = '0';
-            setTimeout(() => document.body.style.opacity = '1', 50);
-        }
+        // Mobile Menu Management
+        const initMobileMenu = () => {
+            const menuButton = document.getElementById('menuButton');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const toggleMenu = () => {
+                mobileMenu.classList.toggle('hidden');
+                const icon = menuButton.querySelector('i');
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            };
 
-        // Initialisation du thème
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
+            menuButton?.addEventListener('click', toggleMenu);
+            mobileMenu?.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    menuButton.querySelector('i').classList.replace('fa-times', 'fa-bars');
+                });
+            });
+        };
 
-        // Gestion du loader
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initMobileMenu();
+        });
+
+        // Loader Management
         window.addEventListener('load', () => {
             const loader = document.getElementById('loader');
             const mainContent = document.getElementById('mainContent');
-            
             setTimeout(() => {
                 loader.style.opacity = '0';
                 mainContent.style.opacity = '1';
                 setTimeout(() => loader.style.display = 'none', 700);
             }, 500);
-        });
-
-        // Ajout de la gestion du menu mobile
-        const menuButton = document.getElementById('menuButton');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        menuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-            // Animation du bouton
-            const icon = menuButton.querySelector('i');
-            icon.classList.toggle('fa-bars');
-            icon.classList.toggle('fa-times');
-        });
-
-        // Fermer le menu mobile lors du clic sur un lien
-        mobileMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.add('hidden');
-                menuButton.querySelector('i').classList.add('fa-bars');
-                menuButton.querySelector('i').classList.remove('fa-times');
-            });
         });
     </script>
 </body>
