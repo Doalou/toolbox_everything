@@ -44,51 +44,88 @@
 
     <!-- Grille d'outils -->
     <div id="toolsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Générateur de mot de passe -->
+        <!-- Générateur/Validateur de mot de passe unifié -->
         <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="security">
             <div class="p-6">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900 mr-3">
                         <i class="fas fa-key text-2xl text-primary-600 dark:text-primary-400"></i>
                     </div>
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Générateur de mot de passe</h2>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Gestion des mots de passe</h2>
                 </div>
-                <div class="space-y-4">
-                    <div class="flex gap-4">
-                        <input type="number" id="pwdLength" value="12" min="8" max="64" 
-                               class="w-20 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-center input-padding">
-                        <button onclick="generatePassword()" 
-                                class="flex-1 bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 transition">
-                            Générer
-                        </button>
+                
+                <div class="space-y-6">
+                    <!-- Générateur -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300">Générer un mot de passe</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Longueur</label>
+                                <input type="number" id="pwdLength" value="12" min="8" max="64" 
+                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-center input-padding">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="generatePassword()" 
+                                        class="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 transition">
+                                    <i class="fas fa-sync-alt mr-2"></i>Générer
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 items-center">
+                            <div class="flex-1">
+                                <input type="text" id="generatedPassword" readonly 
+                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white pr-12 input-padding"
+                                       placeholder="Mot de passe généré">
+                            </div>
+                            <button onclick="copyToClipboard('generatedPassword')" 
+                                    class="flex-shrink-0 px-4 py-2 text-gray-600 hover:text-primary-600 transition">
+                                <i class="far fa-copy text-lg"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="relative">
-                        <input type="text" id="generatedPassword" readonly 
-                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white pr-12 input-padding">
-                        <button onclick="copyToClipboard('generatedPassword')" 
-                                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500 transition">
-                            <i class="far fa-copy"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Validateur de mot de passe -->
-        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="security">
-            <div class="p-6">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 dark:bg-green-900 mr-3">
-                        <i class="fas fa-shield-alt text-2xl text-green-600 dark:text-green-400"></i>
+                    <!-- Séparateur -->
+                    <div class="border-t border-gray-200 dark:border-gray-700"></div>
+
+                    <!-- Validateur -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300">Vérifier un mot de passe</h3>
+                        <div class="space-y-4">
+                            <div class="flex gap-4">
+                                <div class="flex-1">
+                                    <input type="text" id="passwordToValidate"
+                                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white input-padding"
+                                           placeholder="Entrez un mot de passe à vérifier">
+                                </div>
+                                <button onclick="validatePassword()" 
+                                        class="flex-shrink-0 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition">
+                                    <i class="fas fa-shield-alt mr-2"></i>Vérifier
+                                </button>
+                            </div>
+                            <div id="validationResult" class="hidden space-y-4">
+                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span id="passwordStrength" class="font-medium"></span>
+                                        <div class="flex-1 ml-4 grid grid-cols-4 gap-2">
+                                            <div class="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 transition-all duration-300" id="strengthBar1"></div>
+                                            <div class="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 transition-all duration-300" id="strengthBar2"></div>
+                                            <div class="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 transition-all duration-300" id="strengthBar3"></div>
+                                            <div class="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 transition-all duration-300" id="strengthBar4"></div>
+                                        </div>
+                                    </div>
+                                    <ul id="passwordCriteria" class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <li id="lengthCriterion"><i class="fas fa-circle text-xs mr-2"></i>8 caractères minimum</li>
+                                        <li id="upperCriterion"><i class="fas fa-circle text-xs mr-2"></i>Une majuscule</li>
+                                        <li id="lowerCriterion"><i class="fas fa-circle text-xs mr-2"></i>Une minuscule</li>
+                                        <li id="numberCriterion"><i class="fas fa-circle text-xs mr-2"></i>Un chiffre</li>
+                                        <li id="specialCriterion"><i class="fas fa-circle text-xs mr-2"></i>Un caractère spécial</li>
+                                    </ul>
+                                </div>
+                                <div id="passwordFeedback" class="text-sm"></div>
+                            </div>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Validateur de mot de passe</h2>
-                </div>
-                <div class="space-y-4">
-                    <input type="text" id="passwordToValidate"
-                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 
-                                  dark:bg-gray-700 dark:text-white input-padding"
-                           placeholder="Entrez un mot de passe">
-                    <div id="passwordStrength" class="text-sm"></div>
                 </div>
             </div>
         </div>
@@ -103,27 +140,90 @@
                     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Calculateur de Hash</h2>
                 </div>
                 <div class="space-y-4">
-                    <input type="text" id="textToHash"
-                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 
-                                  dark:bg-gray-700 dark:text-white input-padding"
-                           placeholder="Texte à hasher">
-                    <select id="hashAlgorithm"
-                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 
-                                   dark:bg-gray-700 dark:text-white select-padding">
-                        <option value="md5">MD5</option>
-                        <option value="sha1">SHA-1</option>
-                        <option value="sha256" selected>SHA-256</option>
-                        <option value="sha512">SHA-512</option>
-                    </select>
-                    <div class="relative">
-                        <input type="text" id="hashResult" readonly
-                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 
-                                      dark:bg-gray-700 dark:text-white pr-12 input-padding">
-                        <button onclick="copyToClipboard('hashResult')"
-                                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 
-                                       hover:text-primary-500 transition">
-                            <i class="far fa-copy"></i>
+                    <!-- Onglets améliorés -->
+                    <div class="flex rounded-lg bg-gray-100 dark:bg-gray-700/50 p-1">
+                        <button onclick="switchHashTab('text')" id="hashTabText"
+                                class="flex-1 flex items-center justify-center px-4 py-2 rounded-md 
+                                       transition-all duration-200 bg-white dark:bg-gray-800 shadow-sm">
+                            <i class="fas fa-keyboard mr-2"></i>Texte
                         </button>
+                        <button onclick="switchHashTab('file')" id="hashTabFile"
+                                class="flex-1 flex items-center justify-center px-4 py-2 rounded-md
+                                       transition-all duration-200 text-gray-600 dark:text-gray-300
+                                       hover:text-gray-900 dark:hover:text-white">
+                            <i class="fas fa-file-alt mr-2"></i>Fichier
+                        </button>
+                    </div>
+
+                    <!-- Section Texte -->
+                    <div id="hashTextSection" class="transition-all duration-200">
+                        <textarea id="textToHash"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                       dark:bg-gray-700 dark:text-white h-24 resize-none textarea-padding"
+                                placeholder="Texte à hasher"></textarea>
+                    </div>
+
+                    <!-- Section Fichier améliorée -->
+                    <div id="hashFileSection" class="hidden transition-all duration-200">
+                        <div class="flex flex-col items-center justify-center w-full">
+                            <label class="w-full flex flex-col items-center px-4 py-6 bg-gray-50 
+                                        dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 
+                                        rounded-lg border-2 border-dashed border-gray-300 
+                                        dark:border-gray-600 cursor-pointer hover:bg-gray-100 
+                                        dark:hover:bg-gray-700 transition-colors duration-200">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <i class="fas fa-cloud-upload-alt text-3xl mb-3 text-gray-400"></i>
+                                    <p class="mb-2 text-sm"><span class="font-semibold">Cliquez</span> ou glissez un fichier ici</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        TXT, MD, JSON, XML, CSV (Max. 10MB)
+                                    </p>
+                                </div>
+                                <input type="file" id="fileToHash" class="hidden" 
+                                       accept=".txt,.md,.json,.xml,.csv">
+                            </label>
+                            <div id="selectedFileName" class="mt-2 text-sm text-gray-500 dark:text-gray-400 
+                                                            flex items-center gap-2">
+                                <i class="fas fa-file text-gray-400"></i>
+                                <span>Aucun fichier sélectionné</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options de hash communes -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <select id="hashAlgorithm"
+                                class="rounded-lg border-gray-300 dark:border-gray-600 
+                                       dark:bg-gray-700 dark:text-white select-padding">
+                            <option value="md5">MD5</option>
+                            <option value="sha1">SHA-1</option>
+                            <option value="sha256" selected>SHA-256</option>
+                            <option value="sha512">SHA-512</option>
+                        </select>
+                        <button onclick="calculateHash()" 
+                                class="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4 py-2 transition">
+                            <i class="fas fa-calculator mr-2"></i>Calculer
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <div class="flex">
+                            <input type="text" id="hashResult" readonly
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                          dark:bg-gray-700 dark:text-white pr-24 input-padding"
+                                   placeholder="Résultat du hash">
+                            <div class="absolute right-0 top-0 h-full flex items-center gap-2 pr-2">
+                                <button onclick="copyToClipboard('hashResult')"
+                                        class="p-2 text-gray-400 hover:text-purple-500 transition"
+                                        title="Copier">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                                <button onclick="clearHash()"
+                                        class="p-2 text-gray-400 hover:text-red-500 transition"
+                                        title="Effacer">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -209,6 +309,91 @@
             </div>
         </div>
 
+        <!-- QR Code Generator -->
+        <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="conversion">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 mr-3">
+                        <i class="fas fa-qrcode text-2xl text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Générateur QR Code</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contenu</label>
+                        <textarea id="qrContent"
+                                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                         dark:bg-gray-700 dark:text-white h-24 resize-none textarea-padding"
+                                  placeholder="Texte ou URL pour le QR code"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Taille
+                            </label>
+                            <input type="number" id="qrSize" value="10" min="5" max="20"
+                                   class="mt-1 w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                          dark:bg-gray-700 dark:text-white input-padding">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Bordure
+                            </label>
+                            <input type="number" id="qrBorder" value="4" min="0" max="10"
+                                   class="mt-1 w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                          dark:bg-gray-700 dark:text-white input-padding">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Couleur QR
+                            </label>
+                            <div class="mt-1 flex">
+                                <input type="color" id="qrColor" value="#000000"
+                                       class="h-10 w-full rounded-lg cursor-pointer border-gray-300 
+                                              dark:border-gray-600 dark:bg-gray-700">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Couleur fond
+                            </label>
+                            <div class="mt-1 flex">
+                                <input type="color" id="qrBgColor" value="#FFFFFF"
+                                       class="h-10 w-full rounded-lg cursor-pointer border-gray-300 
+                                              dark:border-gray-600 dark:bg-gray-700">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <button onclick="generateQRCode()"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg 
+                                       px-4 py-2 transition flex items-center justify-center">
+                            <i class="fas fa-qrcode mr-2"></i>
+                            Générer QR Code
+                        </button>
+                        
+                        <div id="qrResult" class="hidden mt-4">
+                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <img id="qrImage" class="mx-auto max-w-full h-auto rounded-lg shadow-lg bg-white dark:bg-gray-800"
+                                     alt="QR Code généré">
+                            </div>
+                            <button onclick="downloadQRCode()"
+                                    class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white 
+                                           rounded-lg px-4 py-2 transition flex items-center justify-center">
+                                <i class="fas fa-download mr-2"></i>
+                                Télécharger
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Upscale Image -->
         <div class="tool-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300" data-category="image">
             <div class="p-6">
@@ -276,9 +461,9 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
+        <!-- Analyseur de texte avancé -->
+        <div class="tool-card" data-category="text"></div>
 <style>
 .tool-card {
     @apply bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl 
@@ -396,24 +581,6 @@ async function generatePassword() {
 }
 
 let passwordDebounce;
-document.getElementById('passwordToValidate').addEventListener('input', (e) => {
-    clearTimeout(passwordDebounce);
-    passwordDebounce = setTimeout(async () => {
-        try {
-            const response = await fetch('/essentials/validate-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: e.target.value })
-            });
-            const data = await response.json();
-            const strengthElement = document.getElementById('passwordStrength');
-            strengthElement.textContent = `Force: ${data.strength}`;
-            strengthElement.className = `text-sm ${getStrengthColor(data.strength)}`;
-        } catch (error) {
-            showNotification(error.message, 'error');
-        }
-    }, 300);
-});
 
 function getStrengthColor(strength) {
     const colors = {
@@ -520,6 +687,71 @@ function copyToClipboard(elementId) {
     showNotification('Copié dans le presse-papier !', 'success');
 }
 
+async function generateQRCode() {
+    const content = document.getElementById('qrContent').value;
+    if (!content) {
+        showNotification('Veuillez entrer un contenu pour le QR code', 'error');
+        return;
+    }
+
+    const button = document.querySelector('button[onclick="generateQRCode()"]');
+    setLoading(button, true);
+
+    try {
+        const size = document.getElementById('qrSize').value;
+        const border = document.getElementById('qrBorder').value;
+        const color = hexToRgb(document.getElementById('qrColor').value);
+        const bgColor = hexToRgb(document.getElementById('qrBgColor').value);
+
+        const response = await fetch('/essentials/generate-qr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                data: content,
+                size: parseInt(size),
+                border: parseInt(border),
+                color: color,
+                bg_color: bgColor
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la génération du QR code');
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        const qrResult = document.getElementById('qrResult');
+        const qrImage = document.getElementById('qrImage');
+        qrImage.src = url;
+        qrResult.classList.remove('hidden');
+
+        showNotification('QR Code généré avec succès!', 'success');
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+    ] : null;
+}
+
+function downloadQRCode() {
+    const qrImage = document.getElementById('qrImage');
+    const link = document.createElement('a');
+    link.download = 'qrcode.png';
+    link.href = qrImage.src;
+    link.click();
+}
+
 async function upscaleImage() {
     const imageInput = document.getElementById('imageInput');
     const width = document.getElementById('imageWidth').value;
@@ -604,5 +836,305 @@ toolSearch.addEventListener('input', () => {
         card.style.display = title.includes(query) ? 'block' : 'none';
     });
 });
+
+function updatePasswordStrength(analysis) {
+    // Mise à jour des barres de force
+    const score = analysis.score;
+    const maxScore = 8;
+    const bars = ['strengthBar1', 'strengthBar2', 'strengthBar3', 'strengthBar4'];
+    const colors = {
+        'Très faible': 'bg-red-500',
+        'Faible': 'bg-orange-500',
+        'Moyen': 'bg-yellow-500',
+        'Fort': 'bg-green-500',
+        'Très fort': 'bg-emerald-500'
+    };
+    
+    // Calcul du nombre de barres à colorer
+    const filledBars = Math.ceil((score / maxScore) * bars.length);
+    const currentColor = colors[analysis.strength] || 'bg-gray-200';
+    
+    // Mise à jour des barres
+    bars.forEach((barId, index) => {
+        const bar = document.getElementById(barId);
+        if (bar) {
+            bar.className = `h-1.5 rounded-full transition-all duration-300 ${
+                index < filledBars ? currentColor : 'bg-gray-200 dark:bg-gray-700'
+            }`;
+        }
+    });
+    
+    // Mise à jour du texte de force
+    const strengthElement = document.getElementById('passwordStrength');
+    if (strengthElement) {
+        strengthElement.textContent = analysis.strength;
+        strengthElement.className = `text-sm ${colors[analysis.strength].replace('bg-', 'text-')}`;
+    }
+    
+    // Mise à jour des critères
+    const criteria = {
+        'lengthCriterion': analysis.criteria.length.met,
+        'upperCriterion': analysis.criteria.uppercase.met,
+        'lowerCriterion': analysis.criteria.lowercase.met,
+        'numberCriterion': analysis.criteria.digits.met,
+        'specialCriterion': analysis.criteria.symbols.met
+    };
+    
+    Object.entries(criteria).forEach(([id, met]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            const icon = element.querySelector('i');
+            element.classList.toggle('text-green-500', met);
+            element.classList.toggle('text-gray-500', !met);
+            if (icon) {
+                icon.className = `fas fa-${met ? 'check' : 'circle'} text-xs mr-2`;
+            }
+        }
+    });
+}
+
+// Gestionnaire d'événements pour la validation du mot de passe
+const passwordInput = document.getElementById('passwordToValidate');
+if (passwordInput) {
+    passwordInput.addEventListener('input', (e) => {
+        const password = e.target.value;
+        
+        clearTimeout(passwordDebounce);
+        passwordDebounce = setTimeout(async () => {
+            try {
+                const response = await fetch('/essentials/validate-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                
+                if (!response.ok) throw new Error('Erreur serveur');
+                const analysis = await response.json();
+                
+                if (analysis.error) throw new Error(analysis.error);
+                updatePasswordStrength(analysis);
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                showNotification(error.message || 'Erreur lors de la validation', 'error');
+            }
+        }, 300);
+    });
+}
+
+async function validatePassword() {
+    const password = document.getElementById('passwordToValidate').value;
+    const validationResult = document.getElementById('validationResult');
+    const button = document.querySelector('button[onclick="validatePassword()"]');
+    
+    if (!password) {
+        showNotification('Veuillez entrer un mot de passe', 'error');
+        return;
+    }
+    
+    setLoading(button, true);
+    validationResult.classList.remove('hidden');
+    
+    try {
+        const response = await fetch('/essentials/validate-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+        
+        if (!response.ok) throw new Error('Erreur serveur');
+        const analysis = await response.json();
+        
+        if (analysis.error) throw new Error(analysis.error);
+        
+        // Mise à jour de l'interface
+        const strengthElement = document.getElementById('passwordStrength');
+        strengthElement.textContent = analysis.strength;
+        strengthElement.className = `font-medium ${getStrengthColor(analysis.strength)}`;
+        
+        // Mise à jour des barres de force
+        const score = analysis.score;
+        const maxScore = 8;
+        const bars = ['strengthBar1', 'strengthBar2', 'strengthBar3', 'strengthBar4'];
+        const colors = {
+            'Très faible': 'bg-red-500',
+            'Faible': 'bg-orange-500',
+            'Moyen': 'bg-yellow-500',
+            'Fort': 'bg-green-500',
+            'Très fort': 'bg-emerald-500'
+        };
+        
+        const filledBars = Math.ceil((score / maxScore) * bars.length);
+        const currentColor = colors[analysis.strength];
+        
+        bars.forEach((barId, index) => {
+            const bar = document.getElementById(barId);
+            bar.className = `h-1.5 rounded-full transition-all duration-300 ${
+                index < filledBars ? currentColor : 'bg-gray-200 dark:bg-gray-700'
+            }`;
+        });
+        
+        // Mise à jour des critères
+        const criteria = {
+            'lengthCriterion': analysis.criteria.length.met,
+            'upperCriterion': analysis.criteria.uppercase.met,
+            'lowerCriterion': analysis.criteria.lowercase.met,
+            'numberCriterion': analysis.criteria.digits.met,
+            'specialCriterion': analysis.criteria.symbols.met
+        };
+        
+        Object.entries(criteria).forEach(([id, met]) => {
+            const element = document.getElementById(id);
+            const icon = element.querySelector('i');
+            element.className = met ? 'text-green-500' : 'text-gray-500';
+            icon.className = `fas fa-${met ? 'check' : 'circle'} text-xs mr-2`;
+        });
+        
+        // Affichage du feedback
+        const feedbackElement = document.getElementById('passwordFeedback');
+        feedbackElement.innerHTML = analysis.feedback.map(feedback => 
+            `<div class="flex items-start gap-2 text-gray-600 dark:text-gray-400">
+                <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                <span>${feedback}</span>
+            </div>`
+        ).join('');
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        showNotification(error.message || 'Erreur lors de la validation', 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg ${
+        type === 'error' ? 'bg-red-500' : 'bg-green-500'
+    } text-white z-50 animate-fade-in`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'error' ? 'times' : 'check'} mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Ajout des nouvelles fonctions pour le hash
+function switchHashTab(tab) {
+    const textSection = document.getElementById('hashTextSection');
+    const fileSection = document.getElementById('hashFileSection');
+    const textTab = document.getElementById('hashTabText');
+    const fileTab = document.getElementById('hashTabFile');
+    
+    if (tab === 'text') {
+        textSection.classList.remove('hidden');
+        fileSection.classList.add('hidden');
+        textTab.classList.add('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-white');
+        textTab.classList.remove('text-gray-600', 'dark:text-gray-300');
+        fileTab.classList.remove('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-white');
+        fileTab.classList.add('text-gray-600', 'dark:text-gray-300');
+    } else {
+        textSection.classList.add('hidden');
+        fileSection.classList.remove('hidden');
+        fileTab.classList.add('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-white');
+        fileTab.classList.remove('text-gray-600', 'dark:text-gray-300');
+        textTab.classList.remove('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-white');
+        textTab.classList.add('text-gray-600', 'dark:text-gray-300');
+    }
+    
+    // Réinitialiser le résultat
+    document.getElementById('hashResult').value = '';
+}
+
+// Amélioration de l'affichage du nom de fichier
+document.getElementById('fileToHash').addEventListener('change', function(e) {
+    const fileNameContainer = document.getElementById('selectedFileName');
+    if (e.target.files[0]) {
+        const fileName = e.target.files[0].name;
+        const fileSize = (e.target.files[0].size / 1024).toFixed(1);
+        fileNameContainer.innerHTML = `
+            <i class="fas fa-file-alt text-purple-500"></i>
+            <span class="font-medium">${fileName}</span>
+            <span class="text-gray-400">(${fileSize} KB)</span>
+            <button onclick="clearSelectedFile()" 
+                    class="ml-2 text-gray-400 hover:text-red-500 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+    } else {
+        fileNameContainer.innerHTML = `
+            <i class="fas fa-file text-gray-400"></i>
+            <span>Aucun fichier sélectionné</span>
+        `;
+    }
+});
+
+function clearSelectedFile() {
+    const fileInput = document.getElementById('fileToHash');
+    fileInput.value = '';
+    document.getElementById('selectedFileName').innerHTML = `
+        <i class="fas fa-file text-gray-400"></i>
+        <span>Aucun fichier sélectionné</span>
+    `;
+}
+
+async function calculateHash() {
+    const algorithm = document.getElementById('hashAlgorithm').value;
+    const isFileMode = document.getElementById('hashFileSection').classList.contains('hidden') === false;
+    const button = document.querySelector('button[onclick="calculateHash()"]');
+    
+    setLoading(button, true);
+    
+    try {
+        let response;
+        if (isFileMode) {
+            const file = document.getElementById('fileToHash').files[0];
+            if (!file) {
+                throw new Error('Veuillez sélectionner un fichier');
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('algorithm', algorithm);
+            
+            response = await fetch('/essentials/calculate-hash-file', {
+                method: 'POST',
+                body: formData
+            });
+        } else {
+            const text = document.getElementById('textToHash').value;
+            if (!text) {
+                throw new Error('Veuillez entrer du texte à hasher');
+            }
+            
+            response = await fetch('/essentials/calculate-hash', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, algorithm })
+            });
+        }
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('hashResult').value = data.hash;
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        setLoading(button, false);
+    }
+}
+
+function clearHash() {
+    document.getElementById('textToHash').value = '';
+    document.getElementById('fileToHash').value = '';
+    document.getElementById('selectedFileName').textContent = '';
+    document.getElementById('hashResult').value = '';
+}
 </script>
 {% endblock %}
