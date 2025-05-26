@@ -8,7 +8,7 @@ Flask-Caching==2.1.0
 
 # Gestion des médias
 Pillow==10.2.0
-python-ffmpeg==2.0.12
+ffmpeg-python==0.2.0
 
 # YouTube downloader
 yt-dlp==2025.01.26
