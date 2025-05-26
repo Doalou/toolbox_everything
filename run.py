@@ -18,15 +18,10 @@ def setup_logging(app):
     app.logger.setLevel(logging.INFO)
     app.logger.info('Toolbox Everything démarré')
 
+app = create_app()
+compress = Compress()
+compress.init_app(app)
+
 if __name__ == "__main__":
-    app = create_app()
-    
-
-    compress = Compress()
-    compress.init_app(app)
-    
-
     setup_logging(app)
-    
-
     app.run(host="0.0.0.0", port=8000, debug=True, threaded=True)
