@@ -1,100 +1,190 @@
-# Toolbox Everything
+# 🧰 Toolbox Everything
 
-Une application web Flask fournissant une collection d'outils utiles.
+Une boîte à outils web complète avec téléchargeur YouTube, convertisseur de médias et outils utilitaires, le tout dans une interface moderne et responsive.
 
-## Services disponibles
+## ✨ Fonctionnalités
 
-- **YouTube Downloader**: Téléchargez des vidéos et de l'audio depuis YouTube.
-- **Media Converter**: Convertissez des fichiers images et vidéos entre différents formats.
-- **Essentials**: Une suite de petits outils pratiques :
-    - Générateur de QR Code
-    - Générateur de Mots de Passe
-    - Analyseur de Texte
-    - Générateur de Palette de Couleurs
-    - Validateur d'URL
-    - Calculateur de Hash
-    - Encodeur/Décodeur Base64
-    - Formateur JSON
-    - Convertisseur de Timestamp
+- **🎬 Téléchargeur YouTube** - Téléchargez des vidéos et audio depuis YouTube en différentes qualités
+- **🔄 Convertisseur de médias** - Convertissez entre différents formats d'images et vidéos  
+- **🔧 Outils essentiels** - Générateur de QR codes, raccourcisseur d'URL, et plus
+- **📱 Interface responsive** - Fonctionne parfaitement sur desktop et mobile
+- **🐳 Docker ready** - Conteneurisé et prêt pour Docker Hub
 
-## Installation et Lancement
+## 🚀 Installation et lancement
 
-### Méthode standard
+### Option 1: Docker (Recommandé)
 
-1.  **Prérequis**:
-    *   Python 3.x
-    *   pip
-    *   FFmpeg (assurez-vous qu'il est dans votre PATH ou spécifiez le chemin dans `config.py`)
+#### Depuis Docker Hub (quand publié)
+```bash
+docker run -d -p 8000:8000 --name toolbox yourusername/toolbox-everything
+```
 
-2.  **Cloner le dépôt (si applicable) ou télécharger les fichiers.**
+#### Build local
+```bash
+# Clone du projet
+git clone https://github.com/username/toolbox_everything.git
+cd toolbox_everything
 
-3.  **Créer un environnement virtuel (recommandé)**:
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # Pour Linux/macOS
-    # .venv\Scripts\activate    # Pour Windows
-    ```
+# Build et lancement avec Docker Compose
+docker-compose up -d
+```
 
-4.  **Installer les dépendances**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+### Option 2: Installation Python
 
-5.  **Lancer l'application**:
-    ```bash
-    python run.py
-    ```
-    L'application sera accessible par défaut sur `http://127.0.0.1:8000/`.
+```bash
+# Clone et installation
+git clone https://github.com/username/toolbox_everything.git
+cd toolbox_everything
 
-### Utilisation avec Docker
+# Installation des dépendances  
+pip install -r requirements.txt
 
-1.  **Prérequis**:
-    *   Docker
-    *   Docker Compose
+# Lancement
+python run.py
+```
 
-2.  **Construire et démarrer l'application**:
-    ```bash
-    docker-compose up -d
-    ```
-    L'application sera accessible sur `http://localhost:8000/`.
+Accédez ensuite à http://localhost:8000
 
-3.  **Visualiser les logs**:
-    ```bash
-    docker-compose logs -f
-    ```
+## 🐳 Docker Hub
 
-4.  **Arrêter l'application**:
-    ```bash
-    docker-compose down
-    ```
+Ce projet est optimisé pour Docker Hub avec une organisation complète dans le dossier `docker/`.
 
-5.  **Reconstruire l'image après des modifications**:
-    ```bash
-    docker-compose up -d --build
-    ```
+### Publication rapide sur Docker Hub
 
-### Volumes Docker
+**Windows :**
+```powershell
+cd docker
+.\docker-build.ps1 "1.0.0" "votre-username"
+```
 
-Les dossiers suivants sont montés comme volumes pour persister les données:
-- `./uploads`: Fichiers téléversés temporairement
-- `./downloads`: Fichiers téléchargés (ex: vidéos YouTube)
-- `./logs`: Journaux d'application
+**Linux/Mac :**
+```bash
+cd docker
+chmod +x docker-build.sh
+./docker-build.sh "1.0.0" "votre-username"
+```
 
-## Structure du Projet
+**Avec Make :**
+```bash
+cd docker
+make push USERNAME=votre-username VERSION=1.0.0
+```
 
-- `run.py`: Point d'entrée de l'application.
-- `config.py`: Fichier de configuration.
-- `requirements.txt`: Liste des dépendances Python.
-- `app/`: Répertoire principal de l'application Flask.
-  - `core/`: Logique métier centrale, sécurité, exceptions.
-  - `services/`: Contient les blueprints pour chaque service principal.
-    - `common/`: Utilitaires partagés entre les services.
-    - `essentials/`: Outils essentiels (QR code, mot de passe, etc.).
-    - `media_converter/`: Service de conversion de médias.
-    - `youtube_downloader/`: Service de téléchargement YouTube.
-  - `static/`: Fichiers statiques (CSS, JavaScript, images).
-  - `templates/`: Modèles HTML Jinja2.
-    - `errors/`: Pages d'erreur personnalisées.
-    - `essentials/`: Templates pour les outils essentiels.
-- `uploads/`: Répertoire pour les fichiers téléversés temporairement.
-- `downloads/`: Répertoire pour les fichiers téléchargés (ex: YouTube).
+📖 **Guide complet** : Consultez `docker/DOCKER_HUB_GUIDE.md` pour un guide détaillé.
+
+## 📂 Structure du projet
+
+```
+toolbox_everything/
+├── 📁 app/                    # Code source de l'application
+│   ├── core/                  # Modules principaux (sécurité, exceptions)
+│   ├── services/              # Services métier
+│   │   ├── main.py           # Factory de l'application Flask
+│   │   ├── youtube_downloader/ # Service téléchargement YouTube
+│   │   ├── media_converter/   # Service conversion de médias
+│   │   ├── essentials/        # Outils utilitaires
+│   │   └── common/            # Utilitaires partagés
+│   ├── static/               # Fichiers statiques (CSS, JS)
+│   └── templates/            # Templates HTML
+├── 📁 docker/                # 🐳 Outils Docker Hub
+│   ├── docker-build.sh      # Script build Linux/Mac
+│   ├── docker-build.ps1     # Script build Windows
+│   ├── docker-compose.hub.yml # Compose pour Docker Hub
+│   ├── Makefile             # Commandes automatisées
+│   ├── README.md            # Documentation du dossier
+│   ├── README.docker-hub.md # Doc pour page Docker Hub
+│   └── DOCKER_HUB_GUIDE.md  # Guide complet Docker Hub
+├── 🐳 Dockerfile            # Image Docker principale
+├── 🐙 docker-compose.yml    # Compose de développement  
+├── 📋 requirements.txt      # Dépendances Python
+├── 🏃 run.py               # Point d'entrée de l'application
+├── ⚙️  config.py            # Configuration
+└── 📖 README.md            # Ce fichier
+```
+
+## 🔧 Configuration
+
+### Variables d'environnement
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `FLASK_ENV` | Environnement Flask | `production` |
+| `FLASK_APP` | Point d'entrée | `run.py` |
+| `MAX_CONTENT_LENGTH` | Taille max des uploads | `512MB` |
+| `YOUTUBE_MAX_DURATION` | Durée max vidéo YouTube | `3600s` |
+
+### Dossiers de données
+
+- `uploads/` - Fichiers uploadés temporaires
+- `downloads/` - Fichiers téléchargés (YouTube, etc.)  
+- `logs/` - Fichiers de logs de l'application
+
+## 🛠️ Développement
+
+### Prérequis
+
+- Python 3.11+
+- Docker (optionnel)
+- FFmpeg (pour la conversion de médias)
+
+### Installation locale
+
+```bash
+# Clone du repo
+git clone https://github.com/username/toolbox_everything.git
+cd toolbox_everything
+
+# Environnement virtuel
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate     # Windows
+
+# Installation des dépendances
+pip install -r requirements.txt
+
+# Lancement en mode développement
+python run.py
+```
+
+### Tests Docker
+
+```bash
+# Build et test local
+docker-compose up --build
+
+# Ou avec les outils Docker Hub
+cd docker
+make test USERNAME=votre-username
+```
+
+## 📱 API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/` | Interface principale |
+| `/youtube` | Téléchargeur YouTube |
+| `/media` | Convertisseur de médias |
+| `/essentials` | Outils utilitaires |
+
+## 🤝 Contribution
+
+1. Fork du projet
+2. Créez votre branche (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Commit vos changements (`git commit -m 'Ajout nouvelle fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Ouvrez une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence [MIT](LICENSE).
+
+## 🆘 Support
+
+- **Issues** : [GitHub Issues](https://github.com/username/toolbox_everything/issues)
+- **Documentation Docker** : `docker/DOCKER_HUB_GUIDE.md`
+- **Wiki** : [GitHub Wiki](https://github.com/username/toolbox_everything/wiki)
+
+---
+
+**⭐ Si ce projet vous est utile, n'hésitez pas à lui donner une étoile !**
