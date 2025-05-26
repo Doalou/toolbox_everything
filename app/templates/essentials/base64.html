@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Encodeur / Décodeur Base64
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+            Encodez ou décodez facilement vos données en Base64.
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <form id="base64Form" class="space-y-6">
+            <div>
+                <label for="inputText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Texte à traiter
+                </label>
+                <textarea id="inputText" name="inputText" rows="6" required
+                          class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                 dark:bg-gray-700 dark:text-white 
+                                 focus:border-primary-500 focus:ring-primary-500"></textarea>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Opération :</p>
+                <div class="flex items-center">
+                    <input id="encodeRadio" name="operation" type="radio" value="encode" checked 
+                           class="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500">
+                    <label for="encodeRadio" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Encoder</label>
+                </div>
+                <div class="flex items-center">
+                    <input id="decodeRadio" name="operation" type="radio" value="decode"
+                           class="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500">
+                    <label for="decodeRadio" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Décoder</label>
+                </div>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium 
+                           py-3 px-6 rounded-lg transition-all duration-300 
+                           flex items-center justify-center space-x-2">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Traiter</span>
+            </button>
+        </form>
+
+        <div id="base64ResultSection" class="mt-8 hidden pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Résultat :</h3>
+            <div class="relative bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                <textarea id="outputText" readonly rows="6"
+                          class="w-full bg-transparent text-sm font-mono text-gray-800 dark:text-gray-200 border-none focus:ring-0 resize-none"></textarea>
+                <button id="copyResult" title="Copier le résultat"
+                        class="absolute top-2 right-2 p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const base64Form = document.getElementById('base64Form');
+    const resultSection = document.getElementById('base64ResultSection');
+    const outputTextInput = document.getElementById('outputText');
+    const copyResultBtn = document.getElementById('copyResult');
+
+    base64Form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const text = document.getElementById('inputText').value;
+        const operation = document.querySelector('input[name="operation"]:checked').value;
+
+        try {
+            const response = await fetch('/essentials/api/base64', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text, operation: operation }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success && data.result) {
+                outputTextInput.value = data.result;
+                resultSection.classList.remove('hidden');
+                showNotification('Traitement Base64 réussi!', 'success');
+            } else {
+                throw new Error(data.error || 'Erreur lors du traitement Base64');
+            }
+        } catch (error) {
+            showNotification(error.message, 'error');
+            resultSection.classList.add('hidden');
+        }
+    });
+
+    copyResultBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(outputTextInput.value)
+            .then(() => showNotification('Résultat copié!', 'success'))
+            .catch(err => showNotification('Erreur de copie', 'error'));
+    });
+});
+
+function showNotification(message, type = 'success') {
+    const notificationsContainer = document.getElementById('notifications');
+    if (!notificationsContainer) {
+        console.warn("Élément #notifications non trouvé pour afficher la notification.");
+        return;
+    }
+    const notification = document.createElement('div');
+    notification.className = `p-4 rounded-lg shadow-lg ${ type === 'error' ? 'bg-red-500' : 'bg-green-500' } text-white`;
+    notification.textContent = message;
+    notificationsContainer.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+</script>
+{% endblock %}
+
+{% block tools_features %}
+{% include 'tool_features.html' %}
+{% endblock %} 

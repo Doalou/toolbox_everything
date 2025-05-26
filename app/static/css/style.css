@@ -1,0 +1,126 @@
+
+.card-hover-effect {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover-effect:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+
+.animated-gradient-text {
+    background-size: 200% 200%;
+    background-image: linear-gradient(to right, #0ea5e9, #3b82f6, #8b5cf6, #0ea5e9);
+    animation: gradient 8s ease infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+
+.floating-icon {
+    animation: float 3s ease-in-out infinite;
+}
+
+
+.pulse-on-hover:hover {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+
+.glow-effect {
+    transition: all 0.3s ease;
+}
+
+.glow-effect:hover {
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
+}
+
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+
+input, select, textarea {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+
+@media (max-width: 640px) {
+    .mobile-optimized {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+.skeleton {
+    background-color: #e5e7eb;
+    background-image: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.5), rgba(255,255,255,0));
+    background-size: 200px 100%;
+    background-repeat: no-repeat;
+    background-position: left -200px top 0;
+    animation: skeleton-loading 1.5s ease infinite;
+}
+
+@keyframes skeleton-loading {
+    to {
+        background-position: right -200px top 0;
+    }
+}
+
+
+.dark .card-hover-effect:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+.dark .glow-effect:hover {
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+
+.dark .skeleton {
+    background-color: #374151;
+}

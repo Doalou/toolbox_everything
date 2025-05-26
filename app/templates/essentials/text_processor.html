@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Analyseur de Texte
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+            Analysez, formatez et nettoyez votre texte.
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-6">
+        <form id="textForm">
+            <div>
+                <label for="inputText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Votre texte
+                </label>
+                <textarea id="inputText" name="inputText" rows="8" required
+                          class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                 dark:bg-gray-700 dark:text-white 
+                                 focus:border-primary-500 focus:ring-primary-500"></textarea>
+            </div>
+
+            <div>
+                <label for="operation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Opération
+                </label>
+                <select id="operation" name="operation"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                               dark:bg-gray-700 dark:text-white 
+                               focus:border-primary-500 focus:ring-primary-500">
+                    <option value="analyze">Analyser le texte</option>
+                    <option value="format">Formater le texte</option>
+                    <option value="clean">Nettoyer le texte</option>
+                </select>
+            </div>
+
+            <div id="formatOptions" class="hidden">
+                <label for="formatType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Type de formatage
+                </label>
+                <select id="formatType" name="formatType"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                               dark:bg-gray-700 dark:text-white 
+                               focus:border-primary-500 focus:ring-primary-500">
+                    <option value="uppercase">Majuscules</option>
+                    <option value="lowercase">Minuscules</option>
+                    <option value="title">Titre (Title Case)</option>
+                    <option value="sentence">Phrase (Sentence case)</option>
+                    <option value="reverse">Inverser</option>
+                    <option value="remove_extra_spaces">Supprimer les espaces superflus</option>
+                </select>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium 
+                           py-3 px-6 rounded-lg transition-all duration-300 
+                           flex items-center justify-center space-x-2">
+                <i class="fas fa-cogs"></i>
+                <span>Traiter le Texte</span>
+            </button>
+        </form>
+
+        <div id="resultSection" class="mt-8 hidden pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Résultat :</h3>
+            <div id="analysisResult" class="hidden space-y-4 text-sm text-gray-700 dark:text-gray-300">
+                <div class="grid grid-cols-2 gap-4">
+                    <p><strong>Caractères:</strong> <span id="charCount"></span></p>
+                    <p><strong>Mots:</strong> <span id="wordCount"></span></p>
+                    <p><strong>Lignes:</strong> <span id="lineCount"></span></p>
+                    <p><strong>Paragraphes:</strong> <span id="paragraphCount"></span></p>
+                    <p><strong>Phrases:</strong> <span id="sentenceCount"></span></p>
+                    <p><strong>Temps de lecture estimé:</strong> <span id="readingTime"></span> min</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mt-4 mb-2">Mots les plus fréquents:</h4>
+                    <ul id="commonWords" class="list-disc list-inside"></ul>
+                </div>
+            </div>
+            <div id="formattedResult" class="hidden bg-gray-100 dark:bg-gray-700 p-4 rounded-lg whitespace-pre-wrap font-mono text-sm"></div>
+            <div id="cleanedResult" class="hidden bg-gray-100 dark:bg-gray-700 p-4 rounded-lg whitespace-pre-wrap font-mono text-sm"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const textForm = document.getElementById('textForm');
+    const operationSelect = document.getElementById('operation');
+    const formatOptionsDiv = document.getElementById('formatOptions');
+    const resultSection = document.getElementById('resultSection');
+    const analysisResultDiv = document.getElementById('analysisResult');
+    const formattedResultDiv = document.getElementById('formattedResult');
+    const cleanedResultDiv = document.getElementById('cleanedResult');
+
+    operationSelect.addEventListener('change', function() {
+        formatOptionsDiv.classList.toggle('hidden', this.value !== 'format');
+    });
+
+    textForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const text = document.getElementById('inputText').value;
+        const operation = operationSelect.value;
+        const formatType = document.getElementById('formatType').value;
+
+        const payload = {
+            text: text,
+            operation: operation
+        };
+
+        if (operation === 'format') {
+            payload.format_type = formatType;
+        }
+
+        try {
+            const response = await fetch('/essentials/api/text/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                resultSection.classList.remove('hidden');
+                analysisResultDiv.classList.add('hidden');
+                formattedResultDiv.classList.add('hidden');
+                cleanedResultDiv.classList.add('hidden');
+
+                if (operation === 'analyze') {
+                    analysisResultDiv.classList.remove('hidden');
+                    document.getElementById('charCount').textContent = data.result.statistics.characters;
+                    document.getElementById('wordCount').textContent = data.result.statistics.words;
+                    document.getElementById('lineCount').textContent = data.result.statistics.lines;
+                    document.getElementById('paragraphCount').textContent = data.result.statistics.paragraphs;
+                    document.getElementById('sentenceCount').textContent = data.result.statistics.sentences;
+                    document.getElementById('readingTime').textContent = data.result.reading_time;
+                    
+                    const commonWordsList = document.getElementById('commonWords');
+                    commonWordsList.innerHTML = '';
+                    data.result.most_common_words.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = `${item[0]}: ${item[1]}`;
+                        commonWordsList.appendChild(li);
+                    });
+
+                } else if (operation === 'format') {
+                    formattedResultDiv.classList.remove('hidden');
+                    formattedResultDiv.textContent = data.result;
+                } else if (operation === 'clean') {
+                    cleanedResultDiv.classList.remove('hidden');
+                    cleanedResultDiv.textContent = data.result;
+                }
+                showNotification('Texte traité avec succès!', 'success');
+            } else {
+                throw new Error(data.error || 'Erreur lors du traitement du texte');
+            }
+        } catch (error) {
+            showNotification(error.message, 'error');
+            resultSection.classList.add('hidden');
+        }
+    });
+});
+
+// Repris de main.js pour la notification - idéalement, main.js serait importé comme module
+function showNotification(message, type = 'success') {
+    const notificationsContainer = document.getElementById('notifications');
+    if (!notificationsContainer) {
+        console.warn("Élément #notifications non trouvé pour afficher la notification.");
+        return;
+    }
+    const notification = document.createElement('div');
+    notification.className = `p-4 rounded-lg shadow-lg ${ type === 'error' ? 'bg-red-500' : 'bg-green-500' } text-white`;
+    notification.textContent = message;
+    notificationsContainer.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+</script>
+{% endblock %} 

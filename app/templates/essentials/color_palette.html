@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Générateur de Palette de Couleurs
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+            Créez des palettes harmonieuses à partir d'une couleur de base.
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <form id="colorForm" class="space-y-6">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div>
+                    <label for="baseColor" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Couleur de base
+                    </label>
+                    <input type="color" id="baseColor" name="baseColor" value="#3B82F6"
+                           class="w-full h-10 rounded-lg border-gray-300 dark:border-gray-600 p-0.5">
+                </div>
+                <div>
+                    <label for="paletteType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Type de palette
+                    </label>
+                    <select id="paletteType" name="paletteType"
+                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                   dark:bg-gray-700 dark:text-white 
+                                   focus:border-primary-500 focus:ring-primary-500">
+                        <option value="monochromatic">Monochromatique</option>
+                        <option value="analogous">Analogue</option>
+                        <option value="complementary" selected>Complémentaire</option>
+                        <option value="triadic">Triadique</option>
+                        <option value="random">Aléatoire</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="colorCount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Nombre de couleurs
+                    </label>
+                    <input type="number" id="colorCount" name="colorCount" value="5" min="3" max="20"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                  dark:bg-gray-700 dark:text-white 
+                                  focus:border-primary-500 focus:ring-primary-500">
+                </div>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium 
+                           py-3 px-6 rounded-lg transition-all duration-300 
+                           flex items-center justify-center space-x-2">
+                <i class="fas fa-palette"></i>
+                <span>Générer la Palette</span>
+            </button>
+        </form>
+
+        <div id="paletteResult" class="mt-8 hidden">
+            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Palette Générée :</h3>
+            <div id="colorGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <!-- Les couleurs seront injectées ici -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorForm = document.getElementById('colorForm');
+    const paletteResultDiv = document.getElementById('paletteResult');
+    const colorGrid = document.getElementById('colorGrid');
+
+    // Afficher la valeur hex de la couleur de base à côté du sélecteur de couleur
+    const baseColorInput = document.getElementById('baseColor');
+    let baseColorValueDisplay = document.createElement('span');
+    baseColorValueDisplay.textContent = baseColorInput.value;
+    baseColorValueDisplay.className = 'ml-2 text-sm text-gray-500 dark:text-gray-400';
+    baseColorInput.parentNode.appendChild(baseColorValueDisplay);
+    baseColorInput.addEventListener('input', function() {
+        baseColorValueDisplay.textContent = this.value;
+    });
+
+    colorForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const baseColor = baseColorInput.value;
+        const paletteType = document.getElementById('paletteType').value;
+        const count = parseInt(document.getElementById('colorCount').value);
+
+        try {
+            const response = await fetch('/essentials/api/colors/palette', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    base_color: baseColor,
+                    type: paletteType,
+                    count: count
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                displayPalette(data.palette);
+                paletteResultDiv.classList.remove('hidden');
+                showNotification('Palette générée avec succès!', 'success');
+            } else {
+                throw new Error(data.error || 'Erreur lors de la génération de la palette');
+            }
+        } catch (error) {
+            showNotification(error.message, 'error');
+            paletteResultDiv.classList.add('hidden');
+        }
+    });
+
+    function displayPalette(palette) {
+        colorGrid.innerHTML = ''; // Clear previous results
+        palette.forEach(color => {
+            const colorBox = document.createElement('div');
+            colorBox.className = 'h-24 rounded-lg shadow flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-105';
+            colorBox.style.backgroundColor = color.hex;
+            
+            const hexText = document.createElement('span');
+            hexText.textContent = color.hex.toUpperCase();
+            hexText.className = 'text-xs font-medium px-2 py-0.5 rounded'; // Initialement transparent ou contrasté
+            
+            const rgbText = document.createElement('span');
+            rgbText.textContent = color.rgb;
+            rgbText.className = 'text-xs mt-1 px-2 py-0.5 rounded';
+
+            // Déterminer la couleur du texte (noir ou blanc) pour une meilleure lisibilité
+            const lumineux = isColorLight(color.hex);
+            hexText.style.color = lumineux ? '#000' : '#FFF';
+            rgbText.style.color = lumineux ? '#000' : '#FFF';
+            hexText.style.backgroundColor = lumineux ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)';
+            rgbText.style.backgroundColor = lumineux ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)';
+
+            colorBox.appendChild(hexText);
+            colorBox.appendChild(rgbText);
+
+            colorBox.addEventListener('click', () => {
+                navigator.clipboard.writeText(color.hex)
+                    .then(() => showNotification(`Couleur ${color.hex} copiée!`, 'success'))
+                    .catch(err => showNotification('Erreur de copie', 'error'));
+            });
+            colorGrid.appendChild(colorBox);
+        });
+    }
+
+    // Fonction pour déterminer si une couleur est claire ou foncée
+    function isColorLight(hexColor) {
+        const hex = hexColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        // Formule de luminance YIQ
+        const luminance = (r * 299 + g * 587 + b * 114) / 1000;
+        return luminance > 128;
+    }
+});
+
+// Repris de main.js pour la notification
+function showNotification(message, type = 'success') {
+    const notificationsContainer = document.getElementById('notifications');
+    if (!notificationsContainer) {
+        console.warn("Élément #notifications non trouvé pour afficher la notification.");
+        return;
+    }
+    const notification = document.createElement('div');
+    notification.className = `p-4 rounded-lg shadow-lg ${ type === 'error' ? 'bg-red-500' : 'bg-green-500' } text-white`;
+    notification.textContent = message;
+    notificationsContainer.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+</script>
+{% endblock %} 

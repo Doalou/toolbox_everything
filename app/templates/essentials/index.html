@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- En-tête -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Outils <span class="animated-gradient-text">Essentiels</span>
+        </h1>
+        <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+            Une collection d'outils pratiques pour vos besoins quotidiens de développement et de productivité
+        </p>
+    </div>
+
+    <!-- Grille des outils -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- QR Code Generator -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-qrcode text-2xl text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Générateur QR Code</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Créez des QR codes personnalisés avec différents niveaux de correction d'erreur
+            </p>
+            <a href="/essentials/qr-generator" 
+               class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- Password Generator -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-shield-alt text-2xl text-green-600 dark:text-green-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Générateur de Mots de Passe</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Générez des mots de passe sécurisés avec analyse de force
+            </p>
+            <a href="/essentials/password-generator" 
+               class="inline-flex items-center text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- Text Processor -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-file-alt text-2xl text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Analyseur de Texte</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Analysez, formatez et nettoyez vos textes avec des statistiques détaillées
+            </p>
+            <a href="/essentials/text-processor" 
+               class="inline-flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-palette text-2xl text-pink-600 dark:text-pink-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Palette de Couleurs</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Créez des palettes de couleurs harmonieuses pour vos designs
+            </p>
+            <a href="/essentials/color-palette" 
+               class="inline-flex items-center text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- URL Validator -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-link text-2xl text-indigo-600 dark:text-indigo-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Validateur d'URL</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Validez et analysez la structure de vos URLs
+            </p>
+            <a href="/essentials/url-validator" 
+               class="inline-flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- Hash Calculator -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-hashtag text-2xl text-red-600 dark:text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Calculateur de Hash</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Calculez MD5, SHA1, SHA256 et SHA512 de vos textes
+            </p>
+            <a href="/essentials/hash-calculator" 
+               class="inline-flex items-center text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- Base64 Encoder -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-code text-2xl text-yellow-600 dark:text-yellow-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Encodeur Base64</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Encodez et décodez vos données en Base64
+            </p>
+            <a href="/essentials/base64" 
+               class="inline-flex items-center text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- JSON Formatter -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-brackets-curly text-2xl text-teal-600 dark:text-teal-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Formateur JSON</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Formatez, validez et analysez vos données JSON
+            </p>
+            <a href="/essentials/json-formatter" 
+               class="inline-flex items-center text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <!-- Timestamp Converter -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 group card-hover-effect">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform floating-icon">
+                    <i class="fas fa-clock text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Convertisseur Timestamp</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Convertissez entre timestamps Unix et dates lisibles
+            </p>
+            <a href="/essentials/timestamp" 
+               class="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium glow-effect px-3 py-2 rounded-lg">
+                Utiliser l'outil
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block tools_features %}
+{% include 'tool_features.html' %}
+{% endblock %} 

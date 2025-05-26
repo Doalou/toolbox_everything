@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Calculateur de Hash
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+            Calculez les empreintes MD5, SHA1, SHA256, SHA512 de vos textes.
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <form id="hashForm" class="space-y-6">
+            <div>
+                <label for="inputText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Texte à hasher
+                </label>
+                <textarea id="inputText" name="inputText" rows="6" required
+                          class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                 dark:bg-gray-700 dark:text-white 
+                                 focus:border-primary-500 focus:ring-primary-500"></textarea>
+            </div>
+
+            <div>
+                <label for="algorithm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Algorithme de hash
+                </label>
+                <select id="algorithm" name="algorithm"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                               dark:bg-gray-700 dark:text-white 
+                               focus:border-primary-500 focus:ring-primary-500">
+                    <option value="md5">MD5</option>
+                    <option value="sha1">SHA-1</option>
+                    <option value="sha256" selected>SHA-256</option>
+                    <option value="sha512">SHA-512</option>
+                </select>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium 
+                           py-3 px-6 rounded-lg transition-all duration-300 
+                           flex items-center justify-center space-x-2">
+                <i class="fas fa-hashtag"></i>
+                <span>Calculer le Hash</span>
+            </button>
+        </form>
+
+        <div id="hashResultSection" class="mt-8 hidden pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Hash calculé :</h3>
+            <div class="relative bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                <textarea id="calculatedHash" readonly rows="3"
+                          class="w-full bg-transparent text-sm font-mono text-gray-800 dark:text-gray-200 border-none focus:ring-0 resize-none"></textarea>
+                <button id="copyHash" title="Copier le hash"
+                        class="absolute top-2 right-2 p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Algorithme : <span id="resultAlgorithm"></span>, Longueur : <span id="resultLength"></span> caractères.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hashForm = document.getElementById('hashForm');
+    const resultSection = document.getElementById('hashResultSection');
+    const calculatedHashInput = document.getElementById('calculatedHash');
+    const copyHashBtn = document.getElementById('copyHash');
+    const resultAlgorithmSpan = document.getElementById('resultAlgorithm');
+    const resultLengthSpan = document.getElementById('resultLength');
+
+    hashForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const text = document.getElementById('inputText').value;
+        const algorithm = document.getElementById('algorithm').value;
+
+        try {
+            const response = await fetch('/essentials/api/hash', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text, algorithm: algorithm }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success && data.result) {
+                calculatedHashInput.value = data.result.hash;
+                resultAlgorithmSpan.textContent = data.result.algorithm.toUpperCase();
+                resultLengthSpan.textContent = data.result.length;
+                resultSection.classList.remove('hidden');
+                showNotification('Hash calculé avec succès!', 'success');
+            } else {
+                throw new Error(data.error || 'Erreur lors du calcul du hash');
+            }
+        } catch (error) {
+            showNotification(error.message, 'error');
+            resultSection.classList.add('hidden');
+        }
+    });
+
+    copyHashBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(calculatedHashInput.value)
+            .then(() => showNotification('Hash copié!', 'success'))
+            .catch(err => showNotification('Erreur de copie', 'error'));
+    });
+});
+
+function showNotification(message, type = 'success') {
+    const notificationsContainer = document.getElementById('notifications');
+    if (!notificationsContainer) {
+        console.warn("Élément #notifications non trouvé pour afficher la notification.");
+        return;
+    }
+    const notification = document.createElement('div');
+    notification.className = `p-4 rounded-lg shadow-lg ${ type === 'error' ? 'bg-red-500' : 'bg-green-500' } text-white`;
+    notification.textContent = message;
+    notificationsContainer.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+</script>
+{% endblock %}
+
+{% block tools_features %}
+{% include 'tool_features.html' %}
+{% endblock %} 

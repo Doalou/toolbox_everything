@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Validateur d'URL
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+            Vérifiez la validité et analysez la structure de vos URLs.
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <form id="urlForm" class="space-y-6">
+            <div>
+                <label for="urlInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Entrez l'URL à valider
+                </label>
+                <input type="url" id="urlInput" name="urlInput" required
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                              dark:bg-gray-700 dark:text-white 
+                              focus:border-primary-500 focus:ring-primary-500"
+                       placeholder="https://www.example.com">
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium 
+                           py-3 px-6 rounded-lg transition-all duration-300 
+                           flex items-center justify-center space-x-2">
+                <i class="fas fa-link"></i>
+                <span>Valider l'URL</span>
+            </button>
+        </form>
+
+        <div id="urlResultSection" class="mt-8 hidden pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Résultat de la validation :</h3>
+            <div id="urlAnalysisResult" class="space-y-3 text-sm">
+                <p><strong>URL :</strong> <span id="resultUrl" class="font-mono break-all"></span></p>
+                <p><strong>Statut :</strong> <span id="resultIsValid" class="font-semibold"></span></p>
+                <div id="resultComponents" class="hidden space-y-1">
+                    <p><strong>Schéma :</strong> <span id="compScheme"></span></p>
+                    <p><strong>Domaine :</strong> <span id="compDomain"></span></p>
+                    <p><strong>Chemin :</strong> <span id="compPath" class="font-mono break-all"></span></p>
+                    <p><strong>Requête (Query) :</strong> <span id="compQuery" class="font-mono break-all"></span></p>
+                    <p><strong>Fragment :</strong> <span id="compFragment" class="font-mono break-all"></span></p>
+                    <p><strong>Sécurisée (HTTPS) :</strong> <span id="isSecure"></span></p>
+                </div>
+                <div id="resultStatus" class="hidden mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <p><strong>Accessibilité :</strong> <span id="statusAccessible"></span></p>
+                    <p id="statusCodeP" class="hidden"><strong>Code statut :</strong> <span id="statusCode"></span></p>
+                    <p id="statusFinalUrlP" class="hidden"><strong>URL finale (après redirection) :</strong> <span id="statusFinalUrl" class="font-mono break-all"></span></p>
+                    <p id="statusErrorP" class="hidden"><strong>Erreur d'accessibilité :</strong> <span id="statusError" class="text-red-500"></span></p>
+                </div>
+                 <p id="resultError" class="text-red-500 font-semibold hidden"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlForm = document.getElementById('urlForm');
+    const resultSection = document.getElementById('urlResultSection');
+    const analysisResultDiv = document.getElementById('urlAnalysisResult');
+
+    urlForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const url = document.getElementById('urlInput').value;
+
+        try {
+            const response = await fetch('/essentials/api/url/validate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url }),
+            });
+            const data = await response.json();
+
+            resultSection.classList.remove('hidden');
+            document.getElementById('resultUrl').textContent = url;
+            
+            // Masquer tous les éléments de détails spécifiques au début
+            document.getElementById('resultComponents').classList.add('hidden');
+            document.getElementById('resultStatus').classList.add('hidden');
+            document.getElementById('resultError').classList.add('hidden');
+            document.getElementById('statusCodeP').classList.add('hidden');
+            document.getElementById('statusFinalUrlP').classList.add('hidden');
+            document.getElementById('statusErrorP').classList.add('hidden');
+
+            if (response.ok && data.success && data.result) {
+                const result = data.result;
+                const isValidSpan = document.getElementById('resultIsValid');
+                isValidSpan.textContent = result.is_valid ? 'Valide' : 'Invalide';
+                isValidSpan.className = result.is_valid ? 'font-semibold text-green-600 dark:text-green-400' : 'font-semibold text-red-600 dark:text-red-400';
+
+                if (result.is_valid) {
+                    document.getElementById('resultComponents').classList.remove('hidden');
+                    document.getElementById('compScheme').textContent = result.components.scheme || '-';
+                    document.getElementById('compDomain').textContent = result.components.domain || '-';
+                    document.getElementById('compPath').textContent = result.components.path || '-';
+                    document.getElementById('compQuery').textContent = result.components.query || '-';
+                    document.getElementById('compFragment').textContent = result.components.fragment || '-';
+                    document.getElementById('isSecure').textContent = result.is_secure ? 'Oui' : 'Non';
+
+                    if (result.status) {
+                        document.getElementById('resultStatus').classList.remove('hidden');
+                        const accessibleSpan = document.getElementById('statusAccessible');
+                        accessibleSpan.textContent = result.status.accessible ? 'Oui' : 'Non';
+                        accessibleSpan.className = result.status.accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                        
+                        if (result.status.status_code) {
+                             document.getElementById('statusCodeP').classList.remove('hidden');
+                            document.getElementById('statusCode').textContent = result.status.status_code;
+                        }
+                        if (result.status.final_url) {
+                            document.getElementById('statusFinalUrlP').classList.remove('hidden');
+                            document.getElementById('statusFinalUrl').textContent = result.status.final_url;
+                        }
+                        if (result.status.error) {
+                            document.getElementById('statusErrorP').classList.remove('hidden');
+                            document.getElementById('statusError').textContent = result.status.error;
+                        }
+                    }
+                } else if (result.error) {
+                    document.getElementById('resultError').textContent = `Erreur: ${result.error}`;
+                    document.getElementById('resultError').classList.remove('hidden');
+                }
+                showNotification('Validation terminée!', 'success');
+            } else {
+                throw new Error(data.error || 'Erreur lors de la validation de l'URL');
+            }
+        } catch (error) {
+            showNotification(error.message, 'error');
+            resultSection.classList.add('hidden');
+        }
+    });
+});
+
+function showNotification(message, type = 'success') {
+    const notificationsContainer = document.getElementById('notifications');
+    if (!notificationsContainer) {
+        console.warn("Élément #notifications non trouvé pour afficher la notification.");
+        return;
+    }
+    const notification = document.createElement('div');
+    notification.className = `p-4 rounded-lg shadow-lg ${ type === 'error' ? 'bg-red-500' : 'bg-green-500' } text-white`;
+    notification.textContent = message;
+    notificationsContainer.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+</script>
+{% endblock %} 

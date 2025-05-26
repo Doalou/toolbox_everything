@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Générateur de QR Code
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+            Créez facilement des QR codes pour vos textes et URLs.
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <form id="qrForm" class="space-y-6">
+            <div>
+                <label for="qrText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Texte ou URL à encoder
+                </label>
+                <textarea id="qrText" name="qrText" rows="4" required
+                          class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                 dark:bg-gray-700 dark:text-white 
+                                 focus:border-primary-500 focus:ring-primary-500"></textarea>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="qrSize" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Taille (pixels par module)
+                    </label>
+                    <input type="number" id="qrSize" name="qrSize" value="10" min="1" max="50"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                  dark:bg-gray-700 dark:text-white 
+                                  focus:border-primary-500 focus:ring-primary-500">
+                </div>
+                <div>
+                    <label for="qrBorder" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Bordure (modules)
+                    </label>
+                    <input type="number" id="qrBorder" name="qrBorder" value="4" min="0" max="10"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                  dark:bg-gray-700 dark:text-white 
+                                  focus:border-primary-500 focus:ring-primary-500">
+                </div>
+            </div>
+            
+            <div>
+                <label for="qrErrorCorrection" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Niveau de correction d'erreur
+                </label>
+                <select id="qrErrorCorrection" name="qrErrorCorrection"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                               dark:bg-gray-700 dark:text-white 
+                               focus:border-primary-500 focus:ring-primary-500">
+                    <option value="L">Bas (L - 7%)</option>
+                    <option value="M" selected>Moyen (M - 15%)</option>
+                    <option value="Q">Quartile (Q - 25%)</option>
+                    <option value="H">Haut (H - 30%)</option>
+                </select>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium 
+                           py-3 px-6 rounded-lg transition-all duration-300 
+                           flex items-center justify-center space-x-2">
+                <i class="fas fa-qrcode"></i>
+                <span>Générer le QR Code</span>
+            </button>
+        </form>
+
+        <div id="qrResult" class="mt-8 text-center hidden">
+            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Votre QR Code</h3>
+            <img id="qrImage" src="" alt="QR Code généré" class="mx-auto border border-gray-300 dark:border-gray-600 rounded-lg">
+            <a id="downloadLink" href="#" download="qrcode.png" 
+               class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-download mr-2"></i>Télécharger
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('qrForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const text = document.getElementById('qrText').value;
+    const size = parseInt(document.getElementById('qrSize').value);
+    const border = parseInt(document.getElementById('qrBorder').value);
+    const errorCorrection = document.getElementById('qrErrorCorrection').value;
+    
+    const resultDiv = document.getElementById('qrResult');
+    const qrImage = document.getElementById('qrImage');
+    const downloadLink = document.getElementById('downloadLink');
+    
+    try {
+        const response = await fetch('/essentials/api/qr-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: text,
+                size: size,
+                border: border,
+                error_correction: errorCorrection
+            }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            qrImage.src = data.qr_code;
+            downloadLink.href = data.qr_code; // Le base64 peut être utilisé directement pour le téléchargement
+            resultDiv.classList.remove('hidden');
+            showNotification('QR Code généré avec succès!', 'success');
+        } else {
+            throw new Error(data.error || 'Erreur lors de la génération du QR code');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+        resultDiv.classList.add('hidden');
+    }
+});
+
+// Repris de main.js pour la notification - idéalement, main.js serait importé comme module
+function showNotification(message, type = 'success') {
+    const notificationsContainer = document.getElementById('notifications');
+    if (!notificationsContainer) {
+        console.warn("Élément #notifications non trouvé pour afficher la notification.");
+        return;
+    }
+    const notification = document.createElement('div');
+    notification.className = `p-4 rounded-lg shadow-lg ${ type === 'error' ? 'bg-red-500' : 'bg-green-500' } text-white`;
+    notification.textContent = message;
+    notificationsContainer.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+</script>
+{% endblock %} 

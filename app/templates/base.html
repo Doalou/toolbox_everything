@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Toolbox Everything - Une collection d'outils pratiques pour vos besoins quotidiens">
+    <title>Toolbox Everything</title>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.backgroundColor = '#111827'; // bg-gray-900
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.backgroundColor = '#f9fafb'; // bg-gray-50
+        }
+    </script>
+
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/style.css') }}" as="style">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#1a1a1a',
+                            200: '#2d2d2d',
+                            300: '#404040'
+                        },
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    animation: {
+                        'gradient': 'gradient 8s linear infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+
+        body {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        body.loaded {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+        <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="{{ url_for('index') }}" class="flex items-center space-x-3 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-all">
+                            <i class="fas fa-tools text-2xl floating-icon"></i>
+                            <span class="text-xl font-bold animated-gradient-text">Toolbox Everything</span>
+                        </a>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <div class="relative group">
+                            <button class="nav-link text-gray-600 dark:text-gray-100 flex items-center">
+                                <i class="fas fa-th-large mr-2"></i>Essentiels
+                                <i class="fas fa-chevron-down ml-1 text-xs opacity-70 group-hover:rotate-180 transition-transform duration-300"></i>
+                            </button>
+                            <div class="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 scale-0 group-hover:scale-100 origin-top transform z-20 transition-transform duration-150 ease-in-out border border-gray-200 dark:border-gray-700">
+                                <div class="py-1 grid grid-cols-1 gap-1 p-2">
+                                    <a href="{{ url_for('essentials.qr_generator') }}" class="dropdown-item glow-effect">
+                                        <i class="fas fa-qrcode text-blue-500 dark:text-blue-400 mr-2 w-5 text-center"></i>QR Code
+                                    </a>
+                                    <a href="{{ url_for('essentials.password_generator') }}" class="dropdown-item glow-effect">
+                                        <i class="fas fa-key text-green-500 dark:text-green-400 mr-2 w-5 text-center"></i>Mot de passe
+                                    </a>
+                                    <a href="{{ url_for('essentials.text_processor') }}" class="dropdown-item glow-effect">
+                                        <i class="fas fa-file-alt text-purple-500 dark:text-purple-400 mr-2 w-5 text-center"></i>Texte
+                                    </a>
+                                    <a href="{{ url_for('essentials.color_palette') }}" class="dropdown-item glow-effect">
+                                        <i class="fas fa-palette text-pink-500 dark:text-pink-400 mr-2 w-5 text-center"></i>Palette
+                                    </a>
+                                    <a href="{{ url_for('essentials.hash_calculator') }}" class="dropdown-item glow-effect">
+                                        <i class="fas fa-hashtag text-red-500 dark:text-red-400 mr-2 w-5 text-center"></i>Hash
+                                    </a>
+                                    <a href="{{ url_for('essentials.base64_tool') }}" class="dropdown-item glow-effect">
+                                        <i class="fas fa-code text-yellow-500 dark:text-yellow-400 mr-2 w-5 text-center"></i>Base64
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('youtube.index') }}" class="nav-link text-gray-600 dark:text-gray-100">
+                            <i class="fab fa-youtube mr-2 text-red-500"></i>YouTube
+                        </a>
+                        <a href="{{ url_for('media.index') }}" class="nav-link text-gray-600 dark:text-gray-100">
+                            <i class="far fa-images mr-2 text-blue-500"></i>Conversion
+                        </a>
+                        <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ml-4 pulse-on-hover">
+                            <i class="fas fa-moon text-gray-600 dark:text-gray-400 dark:hidden"></i>
+                            <i class="fas fa-sun text-yellow-400 hidden dark:block"></i>
+                        </button>
+                    </div>
+                    <div class="md:hidden flex items-center">
+                        <button id="mobileMenuBtn" class="text-gray-600 dark:text-gray-100 focus:outline-none">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div class="px-2 pt-2 pb-3 space-y-1">
+                    <div class="mobile-menu-group">
+                        <div class="mobile-menu-header" onclick="toggleMobileSubMenu('essentials')">
+                            <span><i class="fas fa-th-large mr-2"></i>Essentiels</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-300" id="essentials-chevron"></i>
+                        </div>
+                        <div class="mobile-submenu hidden" id="essentials-submenu">
+                            <a href="{{ url_for('essentials.qr_generator') }}" class="mobile-submenu-item">
+                                <i class="fas fa-qrcode text-blue-500 dark:text-blue-400 mr-2"></i>QR Code
+                            </a>
+                            <a href="{{ url_for('essentials.password_generator') }}" class="mobile-submenu-item">
+                                <i class="fas fa-key text-green-500 dark:text-green-400 mr-2"></i>Mot de passe
+                            </a>
+                            <a href="{{ url_for('essentials.text_processor') }}" class="mobile-submenu-item">
+                                <i class="fas fa-file-alt text-purple-500 dark:text-purple-400 mr-2"></i>Texte
+                            </a>
+                            <a href="{{ url_for('essentials.color_palette') }}" class="mobile-submenu-item">
+                                <i class="fas fa-palette text-pink-500 dark:text-pink-400 mr-2"></i>Palette
+                            </a>
+                            <a href="{{ url_for('essentials.hash_calculator') }}" class="mobile-submenu-item">
+                                <i class="fas fa-hashtag text-red-500 dark:text-red-400 mr-2"></i>Hash
+                            </a>
+                            <a href="{{ url_for('essentials.base64_tool') }}" class="mobile-submenu-item">
+                                <i class="fas fa-code text-yellow-500 dark:text-yellow-400 mr-2"></i>Base64
+                            </a>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('youtube.index') }}" class="mobile-menu-item">
+                        <i class="fab fa-youtube mr-2 text-red-500"></i>YouTube
+                    </a>
+                    <a href="{{ url_for('media.index') }}" class="mobile-menu-item">
+                        <i class="far fa-images mr-2 text-blue-500"></i>Conversion
+                    </a>
+                    <button onclick="toggleTheme()" class="mobile-menu-item w-full text-left">
+                        <i class="fas fa-moon mr-2 dark:hidden"></i>
+                        <i class="fas fa-sun mr-2 hidden dark:inline-block text-yellow-400"></i>
+                        <span class="dark:hidden">Mode sombre</span>
+                        <span class="hidden dark:inline-block">Mode clair</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-grow bg-gray-50 dark:bg-gray-900">
+            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 mobile-optimized">
+                {% block content %}{% endblock %}
+                
+
+                {% block tools_features %}{% endblock %}
+            </div>
+        </main>
+
+        <footer class="mt-auto bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">À propos</h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm">
+                            Toolbox Everything est une collection d'outils pratiques pour vos besoins quotidiens en développement et création numérique.
+                        </p>
+                        <div class="flex space-x-4 mt-4">
+                            <a href="#" class="text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors glow-effect p-2 rounded-full">
+                                <i class="fab fa-github text-xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors glow-effect p-2 rounded-full">
+                                <i class="fab fa-twitter text-xl"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Liens rapides</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="{{ url_for('youtube.index') }}" class="text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 text-sm">
+                                    YouTube Downloader
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('media.index') }}" class="text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 text-sm">
+                                    Media Converter
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('essentials.index') }}" class="text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 text-sm">
+                                    Outils Essentiels
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Informations</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 text-sm">
+                                    Conditions d'utilisation
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 text-sm">
+                                    Politique de confidentialité
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 text-sm">
+                                    Contact
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-center text-gray-500 dark:text-gray-400 text-sm">
+                        © 2024 Toolbox Everything. Tous droits réservés.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.style.backgroundColor = '#f9fafb'; // bg-gray-50
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                document.documentElement.style.backgroundColor = '#111827'; // bg-gray-900
+                localStorage.theme = 'dark';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Amélioration de la transition
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 10);
+            
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        });
+        
+        function toggleMobileSubMenu(id) {
+            const submenu = document.getElementById(`${id}-submenu`);
+            const chevron = document.getElementById(`${id}-chevron`);
+            
+            submenu.classList.toggle('hidden');
+            if (submenu.classList.contains('hidden')) {
+                chevron.classList.remove('rotate-180');
+            } else {
+                chevron.classList.add('rotate-180');
+            }
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <style>
+        .nav-link {
+            @apply relative px-3 py-2 hover:text-primary-600 
+                   dark:hover:text-primary-400 transition-colors duration-200;
+        }
+        .nav-link::after {
+            @apply content-[''] absolute left-0 right-0 bottom-0 h-0.5 bg-primary-500 
+                   dark:bg-primary-400 scale-x-0 transition-transform duration-200;
+        }
+        .nav-link:hover::after {
+            @apply scale-x-100;
+        }
+        
+        .dropdown-item {
+            @apply flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 
+                   hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors;
+        }
+        
+        .mobile-menu-item {
+            @apply block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300
+                   hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+        }
+        
+        .mobile-menu-group {
+            @apply mb-1 rounded-md overflow-hidden;
+        }
+        
+        .mobile-menu-header {
+            @apply flex justify-between items-center px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300
+                  hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors;
+        }
+        
+        .mobile-submenu {
+            @apply pl-2 pr-2 pb-1 bg-gray-50 dark:bg-gray-700 border-l-2 border-primary-500 dark:border-primary-400 ml-3;
+        }
+        
+        .mobile-submenu-item {
+            @apply block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300
+                   hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors my-1;
+        }
+    </style>
+</body>
+</html>

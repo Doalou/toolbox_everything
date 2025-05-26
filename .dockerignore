@@ -1,0 +1,44 @@
+# Environnements virtuels
+.venv/
+env/
+venv/
+ENV/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers système
+.DS_Store
+.git
+.github
+.gitignore
+
+# Fichiers de développement
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Fichiers générés lors de l'exécution
+*.log
+logs/
+uploads/
+downloads/
+
+# Fichiers Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Fichiers README et documentations
+README.md
+LICENSE
+docs/
+
+# Fichiers de cache
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/ 
