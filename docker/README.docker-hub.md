@@ -5,14 +5,14 @@ Une boîte à outils web complète avec téléchargeur YouTube et convertisseur 
 ## 🚀 Utilisation Rapide
 
 ```bash
-docker run -d -p 8000:8000 --name toolbox yourusername/toolbox-everything
+docker run -d -p 8000:8000 --name toolbox doalou/toolbox-everything
 
 docker run -d -p 8000:8000 \
   -v toolbox_uploads:/app/uploads \
   -v toolbox_downloads:/app/downloads \
   -v toolbox_logs:/app/logs \
   --name toolbox \
-  yourusername/toolbox-everything
+  doalou/toolbox-everything
 ```
 
 Accédez ensuite à http://localhost:8000
@@ -135,9 +135,7 @@ FFmpeg est inclus dans l'image, mais certaines fonctionnalités avancées peuven
 
 ## 🤝 Support
 
-- **GitHub** : [lien-vers-votre-repo]
-- **Issues** : [lien-vers-issues]
-- **Wiki** : [lien-vers-wiki]
+- **GitHub** : [Lien vers le repo](https://github.com/doalou/toolbox_everything)
 
 ## 📄 Licence
 

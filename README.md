@@ -14,15 +14,15 @@ Une boîte à outils web complète avec téléchargeur YouTube, convertisseur de
 
 ### Option 1: Docker (Recommandé)
 
-#### Depuis Docker Hub (quand publié)
+#### Depuis Docker Hub
 ```bash
-docker run -d -p 8000:8000 --name toolbox yourusername/toolbox-everything
+docker run -d -p 8000:8000 --name toolbox doalou/toolbox-everything
 ```
 
 #### Build local
 ```bash
 # Clone du projet
-git clone https://github.com/username/toolbox_everything.git
+git clone https://github.com/doalou/toolbox_everything.git
 cd toolbox_everything
 
 # Build et lancement avec Docker Compose
@@ -33,7 +33,7 @@ docker-compose up -d
 
 ```bash
 # Clone et installation
-git clone https://github.com/username/toolbox_everything.git
+git clone https://github.com/doalou/toolbox_everything.git
 cd toolbox_everything
 
 # Installation des dépendances  
@@ -131,7 +131,7 @@ toolbox_everything/
 
 ```bash
 # Clone du repo
-git clone https://github.com/username/toolbox_everything.git
+git clone https://github.com/doalou/toolbox_everything.git
 cd toolbox_everything
 
 # Environnement virtuel
@@ -181,9 +181,8 @@ Ce projet est sous licence [MIT](LICENSE).
 
 ## 🆘 Support
 
-- **Issues** : [GitHub Issues](https://github.com/username/toolbox_everything/issues)
+- **Issues** : [GitHub Issues](https://github.com/doalou/toolbox_everything/issues)
 - **Documentation Docker** : `docker/DOCKER_HUB_GUIDE.md`
-- **Wiki** : [GitHub Wiki](https://github.com/username/toolbox_everything/wiki)
 
 ---
 
