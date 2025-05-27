@@ -35,6 +35,26 @@
         </form>
     </div>
 
+    <!-- Indicateur de chargement -->
+    <div id="videoLoading" class="hidden transform transition-all duration-300">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="relative">
+                    <div class="w-16 h-16 border-4 border-red-200 dark:border-red-900 border-t-red-600 dark:border-t-red-400 rounded-full animate-spin"></div>
+                    <i class="fab fa-youtube absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500 text-xl"></i>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        Recherche en cours...
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">
+                        Récupération des informations de la vidéo YouTube
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Prévisualisation de la vidéo -->
     <div id="videoPreview" class="hidden transform transition-all duration-300">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
@@ -152,6 +172,9 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
     const url = document.getElementById('videoUrl').value;
     if (!url) return;
 
+    // Afficher l'indicateur de chargement
+    showVideoLoading(true);
+    
     try {
         const response = await fetch(`/youtube/info?url=${encodeURIComponent(url)}`);
         const data = await response.json();
@@ -165,8 +188,11 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
         document.getElementById('videoDuration').textContent = `Durée: ${formatDuration(data.duration)}`;
         document.getElementById('videoViews').textContent = `Vues: ${formatNumber(data.views)}`;
         
+        // Masquer le chargement et afficher la prévisualisation
+        showVideoLoading(false);
         document.getElementById('videoPreview').classList.remove('hidden');
     } catch (error) {
+        showVideoLoading(false);
         showNotification(error.message, 'error');
     }
 });
@@ -185,7 +211,24 @@ async function downloadVideo(format) {
     try {
         document.getElementById('progressOverlay').classList.remove('hidden');
         progressBar.style.width = '0%';
-        progressText.textContent = 'Démarrage du téléchargement...';
+        progressText.textContent = 'Connexion au serveur YouTube...';
+
+        // Animation de progression simulée pendant la requête
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            if (progress < 90) {
+                progress += Math.random() * 10;
+                progressBar.style.width = `${Math.min(progress, 90)}%`;
+                
+                if (progress < 30) {
+                    progressText.textContent = 'Analyse de l\'URL...';
+                } else if (progress < 60) {
+                    progressText.textContent = 'Récupération des métadonnées...';
+                } else {
+                    progressText.textContent = 'Préparation du téléchargement...';
+                }
+            }
+        }, 200);
 
         const response = await fetch('/youtube/download', {
             method: 'POST',
@@ -199,6 +242,10 @@ async function downloadVideo(format) {
             }),
             signal: abortController.signal
         });
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        progressText.textContent = 'Téléchargement terminé !';
 
         if (!response.ok) {
             const error = await response.json();
@@ -217,6 +264,11 @@ async function downloadVideo(format) {
 
         showNotification('Téléchargement terminé !', 'success');
     } catch (error) {
+        // Nettoyer l'intervalle en cas d'erreur
+        if (typeof progressInterval !== 'undefined') {
+            clearInterval(progressInterval);
+        }
+        
         if (error.name === 'AbortError') {
             showNotification('Téléchargement annulé', 'info');
         } else {
@@ -244,6 +296,68 @@ function cancelDownload() {
     if (abortController) {
         abortController.abort();
     }
+}
+
+function showVideoLoading(show) {
+    const loadingElement = document.getElementById('videoLoading');
+    const previewElement = document.getElementById('videoPreview');
+    
+    if (show) {
+        loadingElement.classList.remove('hidden');
+        previewElement.classList.add('hidden');
+    } else {
+        loadingElement.classList.add('hidden');
+    }
+}
+
+function showNotification(message, type = 'info') {
+    const notificationContainer = document.getElementById('notifications') || createNotificationContainer();
+    
+    const notification = document.createElement('div');
+    notification.className = `
+        transform transition-all duration-300 translate-x-full opacity-0
+        p-4 rounded-lg shadow-lg text-white z-50 mb-2 max-w-sm
+        ${type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'}
+    `;
+    
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    notificationContainer.appendChild(notification);
+    
+    // Animation d'entrée
+    requestAnimationFrame(() => {
+        notification.classList.remove('translate-x-full', 'opacity-0');
+    });
+    
+    // Suppression automatique après 5 secondes
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+function createNotificationContainer() {
+    const container = document.createElement('div');
+    container.id = 'notifications';
+    container.className = 'fixed top-4 right-4 z-50 space-y-2';
+    document.body.appendChild(container);
+    return container;
 }
 </script>
 {% endblock %}
