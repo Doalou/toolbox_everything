@@ -16,7 +16,7 @@ Une boîte à outils web complète avec téléchargeur YouTube, convertisseur de
 
 #### Depuis Docker Hub
 ```bash
-docker run -d -p 8000:8000 --name toolbox doalou/toolbox-everything
+docker run -d -p 8000:8000 --name toolbox doalo/toolbox-everything
 ```
 
 #### Build local
@@ -182,7 +182,6 @@ Ce projet est sous licence [MIT](LICENSE).
 ## 🆘 Support
 
 - **Issues** : [GitHub Issues](https://github.com/doalou/toolbox_everything/issues)
-- **Documentation Docker** : `docker/DOCKER_HUB_GUIDE.md`
 
 ---
 
