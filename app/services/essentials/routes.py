@@ -11,7 +11,7 @@ import re
 from typing import Dict, Any
 
 from app.core.security import require_rate_limit, validate_request_size, secure_headers
-from app.core.exceptions import ValidationError, ToolboxBaseException
+from app.core.exceptions import ValidationError, ToolboxBaseException, URLSecurityError
 from .tools import (
     QRCodeGenerator, 
     PasswordGenerator, 
@@ -187,7 +187,7 @@ def url_validator():
 @essentials_bp.route("/api/url/validate", methods=["POST"])
 @require_rate_limit(max_requests=20, window_seconds=60)
 def validate_url():
-    """Valide et analyse une URL"""
+    """Valide et analyse une URL de manière sécurisée"""
     try:
         data = request.get_json()
         if not data or 'url' not in data:
@@ -197,11 +197,25 @@ def validate_url():
         validator = URLValidator()
         result = validator.validate_and_analyze(url)
         
+        # Si la validation échoue pour des raisons de sécurité, lever une exception appropriée
+        if not result.get('is_valid', False) and 'security_check' in result:
+            security_check = result['security_check']
+            if not security_check.get('passed', False):
+                reasons = security_check.get('reasons', [])
+                reason_text = '; '.join(reasons)
+                raise URLSecurityError(
+                    f"URL bloquée pour des raisons de sécurité: {reason_text}",
+                    url=url,
+                    reason=reason_text
+                )
+        
         return jsonify({
             'success': True,
             'result': result
         })
         
+    except URLSecurityError:
+        raise  # Re-lancer l'exception de sécurité telle quelle
     except Exception as e:
         current_app.logger.error(f"Erreur validation URL: {str(e)}")
         raise ToolboxBaseException(str(e))

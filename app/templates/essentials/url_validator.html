@@ -12,6 +12,20 @@
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <!-- Avertissement de sécurité -->
+        <div class="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-600 rounded-lg p-4 mb-6">
+            <div class="flex items-start">
+                <i class="fas fa-shield-alt text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3"></i>
+                <div>
+                    <h4 class="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">Validation sécurisée</h4>
+                    <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                        Seuls les domaines de confiance sont autorisés (Google, GitHub, Wikipedia, etc.). 
+                        Les adresses IP privées et les domaines suspects sont bloqués pour votre sécurité.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <form id="urlForm" class="space-y-6">
             <div>
                 <label for="urlInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -21,7 +35,7 @@
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 
                               dark:bg-gray-700 dark:text-white 
                               focus:border-primary-500 focus:ring-primary-500"
-                       placeholder="https://www.example.com">
+                       placeholder="https://www.github.com/example">
             </div>
 
             <button type="submit" 
@@ -38,6 +52,23 @@
             <div id="urlAnalysisResult" class="space-y-3 text-sm">
                 <p><strong>URL :</strong> <span id="resultUrl" class="font-mono break-all"></span></p>
                 <p><strong>Statut :</strong> <span id="resultIsValid" class="font-semibold"></span></p>
+                
+                <!-- Section de sécurité -->
+                <div id="securitySection" class="hidden mt-3 p-3 rounded-lg border">
+                    <h4 class="font-semibold mb-2 flex items-center">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        Vérification de sécurité
+                    </h4>
+                    <p><strong>Statut sécurité :</strong> <span id="securityStatus" class="font-semibold"></span></p>
+                    <div id="securityReasons" class="hidden mt-2">
+                        <p><strong>Raisons :</strong></p>
+                        <ul id="securityReasonsList" class="list-disc list-inside ml-4 text-red-600 dark:text-red-400"></ul>
+                    </div>
+                    <div id="dnsResolution" class="hidden mt-2">
+                        <p><strong>Résolution DNS :</strong> <span id="dnsIpAddresses" class="font-mono text-xs"></span></p>
+                    </div>
+                </div>
+
                 <div id="resultComponents" class="hidden space-y-1">
                     <p><strong>Schéma :</strong> <span id="compScheme"></span></p>
                     <p><strong>Domaine :</strong> <span id="compDomain"></span></p>
@@ -51,6 +82,7 @@
                     <p id="statusCodeP" class="hidden"><strong>Code statut :</strong> <span id="statusCode"></span></p>
                     <p id="statusFinalUrlP" class="hidden"><strong>URL finale (après redirection) :</strong> <span id="statusFinalUrl" class="font-mono break-all"></span></p>
                     <p id="statusErrorP" class="hidden"><strong>Erreur d'accessibilité :</strong> <span id="statusError" class="text-red-500"></span></p>
+                    <p id="securityWarningP" class="hidden"><strong>Avertissement sécurité :</strong> <span id="securityWarning" class="text-orange-500"></span></p>
                 </div>
                  <p id="resultError" class="text-red-500 font-semibold hidden"></p>
             </div>
@@ -85,17 +117,55 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('resultComponents').classList.add('hidden');
             document.getElementById('resultStatus').classList.add('hidden');
             document.getElementById('resultError').classList.add('hidden');
+            document.getElementById('securitySection').classList.add('hidden');
+            document.getElementById('securityReasons').classList.add('hidden');
+            document.getElementById('dnsResolution').classList.add('hidden');
             document.getElementById('statusCodeP').classList.add('hidden');
             document.getElementById('statusFinalUrlP').classList.add('hidden');
             document.getElementById('statusErrorP').classList.add('hidden');
+            document.getElementById('securityWarningP').classList.add('hidden');
 
             if (response.ok && data.success && data.result) {
                 const result = data.result;
+                
+                // Affichage de la section sécurité
+                document.getElementById('securitySection').classList.remove('hidden');
+                const securityStatusSpan = document.getElementById('securityStatus');
+                const securitySection = document.getElementById('securitySection');
+                
+                if (result.security_check && result.security_check.passed) {
+                    securityStatusSpan.textContent = 'Validé';
+                    securityStatusSpan.className = 'font-semibold text-green-600 dark:text-green-400';
+                    securitySection.className = 'mt-3 p-3 rounded-lg border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20';
+                    
+                    // Afficher les IPs résolues si disponibles
+                    if (result.dns_resolution && result.dns_resolution.resolved_ips) {
+                        document.getElementById('dnsResolution').classList.remove('hidden');
+                        document.getElementById('dnsIpAddresses').textContent = result.dns_resolution.resolved_ips.join(', ');
+                    }
+                } else {
+                    securityStatusSpan.textContent = 'Refusé';
+                    securityStatusSpan.className = 'font-semibold text-red-600 dark:text-red-400';
+                    securitySection.className = 'mt-3 p-3 rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20';
+                    
+                    // Afficher les raisons du refus
+                    if (result.security_check && result.security_check.reasons && result.security_check.reasons.length > 0) {
+                        document.getElementById('securityReasons').classList.remove('hidden');
+                        const reasonsList = document.getElementById('securityReasonsList');
+                        reasonsList.innerHTML = '';
+                        result.security_check.reasons.forEach(reason => {
+                            const li = document.createElement('li');
+                            li.textContent = reason;
+                            reasonsList.appendChild(li);
+                        });
+                    }
+                }
+
                 const isValidSpan = document.getElementById('resultIsValid');
                 isValidSpan.textContent = result.is_valid ? 'Valide' : 'Invalide';
                 isValidSpan.className = result.is_valid ? 'font-semibold text-green-600 dark:text-green-400' : 'font-semibold text-red-600 dark:text-red-400';
 
-                if (result.is_valid) {
+                if (result.is_valid && result.security_check && result.security_check.passed) {
                     document.getElementById('resultComponents').classList.remove('hidden');
                     document.getElementById('compScheme').textContent = result.components.scheme || '-';
                     document.getElementById('compDomain').textContent = result.components.domain || '-';
@@ -121,6 +191,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (result.status.error) {
                             document.getElementById('statusErrorP').classList.remove('hidden');
                             document.getElementById('statusError').textContent = result.status.error;
+                        }
+                        if (result.status.security_warning) {
+                            document.getElementById('securityWarningP').classList.remove('hidden');
+                            document.getElementById('securityWarning').textContent = result.status.security_warning;
                         }
                     }
                 } else if (result.error) {

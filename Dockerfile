@@ -3,7 +3,7 @@ FROM python:3.12-slim AS builder
 
 # Métadonnées de l'image
 LABEL maintainer="toolbox-everything"
-LABEL version="1.1.2c"
+LABEL version="1.1.3"
 LABEL description="Toolbox Everything - Une boîte à outils web complète avec téléchargeur YouTube et convertisseur de médias"
 
 # Installation des dépendances de build avec correctifs de sécurité
@@ -28,7 +28,7 @@ FROM python:3.12-slim
 
 # Métadonnées de l'image finale
 LABEL maintainer="toolbox-everything"
-LABEL version="1.1.2c"
+LABEL version="1.1.3"
 LABEL description="Toolbox Everything - Une boîte à outils web complète"
 LABEL org.opencontainers.image.source="https://github.com/doalou/toolbox_everything"
 LABEL org.opencontainers.image.documentation="https://github.com/doalou/toolbox_everything/README.md"

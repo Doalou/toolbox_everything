@@ -22,6 +22,24 @@ class Config:
     CHUNK_SIZE: int = 8192  # Taille optimale pour la lecture/écriture de fichiers
     FFMPEG_PATH: str = os.path.join(BASE_DIR, "bin", "ffmpeg.exe")
     
+    # Configuration sécurité URL Validator
+    URL_VALIDATOR_ALLOWED_DOMAINS: Set[str] = frozenset({
+        'google.com', 'www.google.com',
+        'github.com', 'www.github.com',
+        'stackoverflow.com', 'www.stackoverflow.com',
+        'wikipedia.org', 'en.wikipedia.org', 'fr.wikipedia.org',
+        'python.org', 'www.python.org',
+        'mozilla.org', 'www.mozilla.org',
+        'cloudflare.com', 'www.cloudflare.com',
+        'example.com', 'www.example.com'  # Pour les tests
+    })
+    
+    URL_VALIDATOR_ALLOWED_DOMAIN_SUFFIXES: Set[str] = frozenset({
+        '.google.com', '.github.com', '.stackoverflow.com',
+        '.wikipedia.org', '.python.org', '.mozilla.org',
+        '.cloudflare.com'
+    })
+    
     @classmethod
     def get_ffmpeg_path(cls) -> Optional[str]:
         """Retourne le chemin vers FFmpeg"""

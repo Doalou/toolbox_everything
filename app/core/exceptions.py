@@ -66,6 +66,17 @@ class SecurityError(ToolboxBaseException):
     def __init__(self, message: str, **kwargs):
         super().__init__(message, "SECURITY_ERROR", 403, **kwargs)
 
+class URLSecurityError(SecurityError):
+    """Erreur de sécurité spécifique aux URLs"""
+    
+    def __init__(self, message: str, url: str = None, reason: str = None, **kwargs):
+        super().__init__(message, **kwargs)
+        self.error_code = "URL_SECURITY_ERROR"
+        if url:
+            self.details['url'] = url
+        if reason:
+            self.details['security_reason'] = reason
+
 class RateLimitError(ToolboxBaseException):
     """Erreur de limitation de débit"""
     

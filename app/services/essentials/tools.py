@@ -8,6 +8,8 @@ import hashlib
 import secrets
 import string
 import colorsys
+import socket
+import ipaddress
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Dict, List, Any, Optional
@@ -386,8 +388,104 @@ class ColorPaletteGenerator:
 class URLValidator:
     """Validateur et analyseur d'URLs"""
     
+    # Liste blanche par défaut des domaines autorisés
+    DEFAULT_ALLOWED_DOMAINS = {
+        'google.com', 'www.google.com',
+        'github.com', 'www.github.com', 
+        'stackoverflow.com', 'www.stackoverflow.com',
+        'wikipedia.org', 'en.wikipedia.org', 'fr.wikipedia.org',
+        'python.org', 'www.python.org',
+        'mozilla.org', 'www.mozilla.org',
+        'cloudflare.com', 'www.cloudflare.com',
+        'example.com', 'www.example.com'  # Pour les tests
+    }
+    
+    # Préfixes de domaines autorisés par défaut (pour les sous-domaines)
+    DEFAULT_ALLOWED_DOMAIN_PREFIXES = {
+        '.google.com', '.github.com', '.stackoverflow.com',
+        '.wikipedia.org', '.python.org', '.mozilla.org',
+        '.cloudflare.com'
+    }
+    
+    # Schemes autorisés
+    ALLOWED_SCHEMES = {'http', 'https'}
+    
+    def __init__(self, allowed_domains=None, allowed_domain_prefixes=None):
+        """
+        Initialise le validateur avec des domaines autorisés personnalisés
+        
+        Args:
+            allowed_domains: Set des domaines autorisés (optionnel)
+            allowed_domain_prefixes: Set des préfixes de domaines autorisés (optionnel)
+        """
+        try:
+            from flask import current_app
+            # Utiliser la configuration de l'application si disponible
+            self.allowed_domains = current_app.config.get('URL_VALIDATOR_ALLOWED_DOMAINS', self.DEFAULT_ALLOWED_DOMAINS)
+            self.allowed_domain_prefixes = current_app.config.get('URL_VALIDATOR_ALLOWED_DOMAIN_SUFFIXES', self.DEFAULT_ALLOWED_DOMAIN_PREFIXES)
+        except RuntimeError:
+            # Pas de contexte Flask, utiliser les valeurs par défaut ou les paramètres
+            self.allowed_domains = allowed_domains or self.DEFAULT_ALLOWED_DOMAINS
+            self.allowed_domain_prefixes = allowed_domain_prefixes or self.DEFAULT_ALLOWED_DOMAIN_PREFIXES
+    
+    def _is_private_ip(self, ip: str) -> bool:
+        """Vérifie si une adresse IP est privée"""
+        try:
+            ip_obj = ipaddress.ip_address(ip)
+            return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
+        except ValueError:
+            return True  # En cas d'erreur, considérer comme privée par sécurité
+    
+    def _is_domain_allowed(self, domain: str) -> bool:
+        """Vérifie si un domaine est autorisé"""
+        domain = domain.lower().strip()
+        
+        # Vérification directe dans la liste blanche
+        if domain in self.allowed_domains:
+            return True
+        
+        # Vérification des préfixes pour les sous-domaines
+        for prefix in self.allowed_domain_prefixes:
+            if domain.endswith(prefix):
+                return True
+        
+        return False
+    
+    def _resolve_domain_safely(self, domain: str) -> Dict[str, Any]:
+        """Résout un domaine de manière sécurisée"""
+        try:
+            # Résolution DNS
+            ip_addresses = socket.gethostbyname_ex(domain)[2]
+            
+            # Vérification que toutes les IPs résolues ne sont pas privées
+            for ip in ip_addresses:
+                if self._is_private_ip(ip):
+                    return {
+                        'safe': False,
+                        'reason': f'Résolution vers une adresse IP privée: {ip}',
+                        'resolved_ips': ip_addresses
+                    }
+            
+            return {
+                'safe': True,
+                'resolved_ips': ip_addresses
+            }
+        
+        except socket.gaierror as e:
+            return {
+                'safe': False,
+                'reason': f'Erreur de résolution DNS: {str(e)}',
+                'resolved_ips': []
+            }
+        except Exception as e:
+            return {
+                'safe': False,
+                'reason': f'Erreur lors de la résolution: {str(e)}',
+                'resolved_ips': []
+            }
+    
     def validate_and_analyze(self, url: str) -> Dict[str, Any]:
-        """Valide et analyse une URL"""
+        """Valide et analyse une URL de manière sécurisée"""
         try:
             parsed = urlparse(url)
             
@@ -403,35 +501,100 @@ class URLValidator:
                     'path': parsed.path,
                     'query': parsed.query,
                     'fragment': parsed.fragment
+                },
+                'security_check': {
+                    'passed': False,
+                    'reasons': []
                 }
             }
             
-            if is_valid:
-                # Informations supplémentaires
-                analysis['is_secure'] = parsed.scheme == 'https'
-                analysis['has_query'] = bool(parsed.query)
-                analysis['has_fragment'] = bool(parsed.fragment)
+            if not is_valid:
+                analysis['security_check']['reasons'].append('URL mal formée')
+                return analysis
+            
+            # Validation du scheme
+            if parsed.scheme not in self.ALLOWED_SCHEMES:
+                analysis['security_check']['reasons'].append(f'Scheme non autorisé: {parsed.scheme}')
+                return analysis
+            
+            # Extraction du domaine (sans port)
+            domain = parsed.netloc.split(':')[0]
+            
+            # Validation du domaine contre la liste blanche
+            if not self._is_domain_allowed(domain):
+                analysis['security_check']['reasons'].append(f'Domaine non autorisé: {domain}')
+                return analysis
+            
+            # Résolution DNS sécurisée
+            dns_result = self._resolve_domain_safely(domain)
+            analysis['dns_resolution'] = dns_result
+            
+            if not dns_result['safe']:
+                analysis['security_check']['reasons'].append(dns_result['reason'])
+                return analysis
+            
+            # Si toutes les validations passent
+            analysis['security_check']['passed'] = True
+            analysis['is_secure'] = parsed.scheme == 'https'
+            analysis['has_query'] = bool(parsed.query)
+            analysis['has_fragment'] = bool(parsed.fragment)
+            
+            # Tentative de requête HTTP sécurisée
+            try:
+                # Headers de sécurité pour la requête
+                headers = {
+                    'User-Agent': 'Toolbox-URL-Validator/1.0',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                }
                 
-                # Tentative de ping (avec timeout court)
-                try:
-                    response = requests.head(url, timeout=5, allow_redirects=True)
-                    analysis['status'] = {
-                        'accessible': response.status_code < 400,
-                        'status_code': response.status_code,
-                        'final_url': response.url if response.url != url else None
-                    }
-                except:
-                    analysis['status'] = {
-                        'accessible': False,
-                        'error': 'Impossible de vérifier l\'accessibilité'
-                    }
+                response = requests.head(
+                    url, 
+                    timeout=5, 
+                    allow_redirects=True,
+                    headers=headers,
+                    verify=True  # Vérification SSL
+                )
+                
+                analysis['status'] = {
+                    'accessible': response.status_code < 400,
+                    'status_code': response.status_code,
+                    'final_url': response.url if response.url != url else None,
+                    'headers': dict(response.headers)
+                }
+                
+                # Vérification de redirection sécurisée
+                if response.url != url:
+                    final_parsed = urlparse(response.url)
+                    final_domain = final_parsed.netloc.split(':')[0]
+                    if not self._is_domain_allowed(final_domain):
+                        analysis['status']['security_warning'] = f'Redirection vers un domaine non autorisé: {final_domain}'
+                
+            except requests.exceptions.SSLError:
+                analysis['status'] = {
+                    'accessible': False,
+                    'error': 'Erreur de certificat SSL'
+                }
+            except requests.exceptions.Timeout:
+                analysis['status'] = {
+                    'accessible': False,
+                    'error': 'Timeout de connexion'
+                }
+            except Exception as e:
+                analysis['status'] = {
+                    'accessible': False,
+                    'error': f'Erreur de connexion: {str(e)}'
+                }
             
             return analysis
             
         except Exception as e:
             return {
                 'is_valid': False,
-                'error': str(e)
+                'error': str(e),
+                'security_check': {
+                    'passed': False,
+                    'reasons': [f'Erreur lors de la validation: {str(e)}']
+                }
             }
 
 class HashCalculator:
