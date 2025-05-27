@@ -7,7 +7,7 @@ Flask-Compress==1.14
 Flask-Caching==2.1.0
 
 # Gestion des médias
-Pillow==10.2.0
+Pillow==10.3.0
 ffmpeg-python==0.2.0
 
 # YouTube downloader
