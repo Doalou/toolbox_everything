@@ -1,10 +1,10 @@
 .PHONY: help build push clean test run stop logs hub-build hub-push
 
-USERNAME ?= doalou
+USERNAME ?= doalo
 VERSION ?= 1.1.3
 IMAGE_NAME = toolbox-everything
 FULL_IMAGE = $(USERNAME)/$(IMAGE_NAME)
-CONTAINER_NAME = toolbox_everything
+CONTAINER_NAME = toolbox-everything
 BUILD_CONTEXT = ..
 
 help:

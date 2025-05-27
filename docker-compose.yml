@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: toolbox_everything
+    container_name: toolbox-everything
     ports:
       - "8000:8000"
     volumes:

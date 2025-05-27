@@ -1,7 +1,7 @@
 services:
   toolbox:
-    image: doalou/toolbox-everything:latest
-    container_name: toolbox_everything
+    image: doalo/toolbox-everything:latest
+    container_name: toolbox-everything
     ports:
       - "8000:8000"
     volumes:

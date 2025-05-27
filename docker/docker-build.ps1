@@ -1,6 +1,6 @@
 param(
     [string]$Version = "1.1.3",
-    [string]$Username = "doalou"
+    [string]$Username = "doalo"
 )
 
 $ImageName = "toolbox-everything"
