@@ -1,15 +1,16 @@
 # Multi-stage build pour optimiser la taille de l'image
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 # Métadonnées de l'image
 LABEL maintainer="toolbox-everything"
-LABEL version="1.0.0"
+LABEL version="1.1.2c"
 LABEL description="Toolbox Everything - Une boîte à outils web complète avec téléchargeur YouTube et convertisseur de médias"
 
-# Installation des dépendances de build
+# Installation des dépendances de build avec correctifs de sécurité
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
+    && apt-get upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,20 +24,21 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Image finale
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Métadonnées de l'image finale
 LABEL maintainer="toolbox-everything"
-LABEL version="1.0.0"
+LABEL version="1.1.2c"
 LABEL description="Toolbox Everything - Une boîte à outils web complète"
-LABEL org.opencontainers.image.source="https://github.com/username/toolbox_everything"
-LABEL org.opencontainers.image.documentation="https://github.com/username/toolbox_everything/README.md"
+LABEL org.opencontainers.image.source="https://github.com/doalou/toolbox_everything"
+LABEL org.opencontainers.image.documentation="https://github.com/doalou/toolbox_everything/README.md"
 
-# Installation des dépendances runtime
+# Installation des dépendances runtime avec correctifs de sécurité
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libmagic1 \
     curl \
+    && apt-get upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

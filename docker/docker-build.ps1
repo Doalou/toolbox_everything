@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "1.1.2",
+    [string]$Version = "1.1.2c",
     [string]$Username = "doalou"
 )
 
