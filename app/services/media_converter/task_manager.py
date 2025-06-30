@@ -1,9 +1,9 @@
-from typing import Dict, Callable
-import threading
 import queue
+import threading
 import uuid
-import time
 from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Dict
+
 
 class Task:
     def __init__(self, task_id: str, total_steps: int = 100):
@@ -24,6 +24,7 @@ class Task:
         if "progress" in self._callbacks:
             self._callbacks["progress"](self.progress, message)
 
+
 class TaskManager:
     def __init__(self, max_workers=4):
         self.tasks: Dict[str, Task] = {}
@@ -34,10 +35,10 @@ class TaskManager:
         task_id = str(uuid.uuid4())
         task = Task(task_id)
         self.tasks[task_id] = task
-        
+
         future = self.executor.submit(func, task, *args, **kwargs)
         future.add_done_callback(lambda f: self._task_complete(task_id, f))
-        
+
         return task_id
 
     def _task_complete(self, task_id: str, future):
@@ -58,6 +59,7 @@ class TaskManager:
     def cancel_task(self, task_id: str):
         if task_id in self.tasks:
             self.tasks[task_id].cancel_requested = True
+
 
 # Instance globale du gestionnaire de tâches
 task_manager = TaskManager()
