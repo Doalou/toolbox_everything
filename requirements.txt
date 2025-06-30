@@ -1,3 +1,5 @@
+# Toolbox Everything Dependencies
+
 # Flask et extensions
 Flask==3.0.2
 Werkzeug==3.0.6
@@ -6,28 +8,38 @@ Flask-WTF==1.2.1
 Flask-Compress==1.14
 Flask-Caching==2.1.0
 
-# Gestion des médias
+# Médias et images
 Pillow==10.3.0
 ffmpeg-python==0.2.0
 
 # YouTube downloader
-yt-dlp==2025.01.26
+yt-dlp==2025.06.25
 
-# Essentials
+# Outils essentiels
 qrcode==7.4.2
 shortuuid==1.0.11
-python-magic==0.4.27
 cryptography==42.0.2
 requests==2.32.2
 
-# Utilitaires
+# Validation MIME et sécurité
+python-magic==0.4.27
+filetype==1.2.0
+
+# Dates et formatage
 python-dateutil==2.8.2
 humanize==4.9.0
 
-# Optimisation
+# Performance
 gunicorn==23.0.0
 brotli==1.1.0
+orjson==3.9.15
 
-# Dépendances de sécurité
+# Sécurité
 certifi>=2024.2.2
 urllib3>=2.2.0
+bleach==6.1.0
+
+# Monitoring et validation
+psutil==5.9.8
+marshmallow==3.21.1
+validators==0.22.0

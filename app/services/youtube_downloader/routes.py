@@ -1,12 +1,14 @@
 from flask import Blueprint, request, send_file, jsonify, render_template, current_app, after_this_request
 import os
 import uuid
-import ffmpeg
+import subprocess
+import shutil
 from werkzeug.utils import secure_filename
 from app.services.common.utils import ensure_dir
 from yt_dlp import YoutubeDL
 import re
 import unicodedata
+import tempfile
 
 youtube_bp = Blueprint("youtube", __name__)
 
@@ -14,105 +16,75 @@ youtube_bp = Blueprint("youtube", __name__)
 def index():
     return render_template('youtube.html')
 
-def get_format_string(quality: str) -> str:
-    """Helper pour obtenir le format string selon la qualité"""
-    # Format plus précis pour une meilleure qualité
-    formats = {
-        'highest': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        '1080p': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]',
-        '720p': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]',
-        '480p': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]',
-        '360p': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]'
-    }
-    return formats.get(quality, formats['highest'])
-
-def create_ydl_opts(format_type: str, quality: str, output_path: str, ffmpeg_path: str) -> dict:
-    """Crée les options yt-dlp optimisées"""
-    ydl_opts = {
-        "outtmpl": "%(title)s.%(ext)s",  # Format du nom de fichier
-        "format": "bestaudio/best" if format_type == "audio" else get_format_string(quality),
-        "ffmpeg_location": ffmpeg_path,
-        "quiet": True,
-        "no_warnings": True,
-        "noplaylist": True,
-        "progress_hooks": [],
-        "postprocessor_hooks": []
-    }
-
-    if format_type == "audio":
-        ydl_opts.update({
-            "postprocessors": [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-                'nopostoverwrites': False,
-            }],
-            "format": "bestaudio/best",
-            "extractaudio": True
-        })
-    else:
-        ydl_opts.update({
-            "merge_output_format": "mp4",
-            "postprocessors": [{
-                'key': 'FFmpegVideoConvertor',
-                'preferedformat': 'mp4',
-            }]
-        })
-
-    return ydl_opts
-
-@youtube_bp.route("/download", methods=["GET"])
-def download_youtube_video():
-    url = request.args.get("url")
-    format = request.args.get("format", "video")
-    quality = request.args.get("quality", "highest")
+def get_ffmpeg_path():
+    """Trouve le chemin vers FFmpeg - Version Docker/Linux optimisée"""
+    # Pour l'environnement Docker, FFmpeg est installé dans /usr/bin
+    potential_paths = [
+        '/usr/bin/ffmpeg',  # Chemin standard Linux/Docker  
+        'ffmpeg'  # Fallback dans le PATH
+    ]
     
-    if not url:
-        return jsonify({"error": "URL manquante"}), 400
+    for path in potential_paths:
+        if shutil.which(path) or os.path.isfile(path):
+            return path
+    
+    return None
 
+def verify_ffmpeg():
+    """Vérifie que FFmpeg est disponible"""
+    ffmpeg_path = get_ffmpeg_path()
+    if not ffmpeg_path:
+        return False, "FFmpeg n'est pas installé sur ce système"
+    
     try:
-        ydl_opts = {
-            "outtmpl": os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_youtube', f"{uuid.uuid4()}.%(ext)s"),
-            "format": "bestaudio/best" if format == "audio" else get_format_string(quality),
-            "postprocessors": [],
-            "quiet": True,
-            "noplaylist": True
-        }
-
-        if format == "audio":
-            ydl_opts["postprocessors"].append({
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192"
-            })
-
-        with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            if not info:
-                return jsonify({"error": "Impossible d'obtenir les informations de la vidéo"}), 400
-
-            downloaded_file = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_youtube', 
-                                         f"{info['id']}.{info.get('ext', 'mp4')}")
-            
-            response = send_file(downloaded_file, as_attachment=True, 
-                               download_name=f"{secure_filename(info['title'])}.{info.get('ext', 'mp4')}")
-
-            @after_this_request
-            def cleanup(response):
-                safe_remove_file(downloaded_file)
-                return response
-
-            return response
-
+        result = subprocess.run(
+            [ffmpeg_path, '-version'], 
+            capture_output=True, 
+            text=True, 
+            timeout=10
+        )
+        if result.returncode == 0:
+            return True, ffmpeg_path
+        else:
+            return False, f"FFmpeg trouvé mais non fonctionnel: {result.stderr}"
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return False, f"Erreur lors de la vérification de FFmpeg: {str(e)}"
+
+def get_format_string(quality: str) -> str:
+    """
+    Génère une chaîne de format robuste pour yt-dlp.
+    Version corrigée pour forcer vraiment la meilleure qualité.
+    """
+    quality_map = {
+        # Pour la meilleure qualité : on essaie d'abord les hautes résolutions puis on descend
+        'highest': 'best[height>=2160]/best[height>=1440]/best[height>=1080]/best[height>=720]/best',
+        # Pour les qualités spécifiques, on utilise une approche plus précise
+        '1080p': 'best[height<=1080][height>=1080]/best[height<=1080]',
+        '720p': 'best[height<=720][height>=720]/best[height<=720]', 
+        '480p': 'best[height<=480][height>=480]/best[height<=480]',
+        '360p': 'best[height<=360][height>=360]/best[height<=360]',
+    }
+    return quality_map.get(quality, 'best[height>=2160]/best[height>=1440]/best[height>=1080]/best')
+
+def sanitize_filename(filename):
+    """Nettoie le nom de fichier en supprimant les caractères spéciaux"""
+    if not filename:
+        return "video"
+    
+    # Normaliser les caractères Unicode
+    filename = unicodedata.normalize('NFKD', filename)
+    filename = filename.encode('ASCII', 'ignore').decode('ASCII')
+    
+    # Supprimer les caractères spéciaux
+    filename = re.sub(r'[^\w\s-]', '', filename)
+    filename = re.sub(r'[-\s]+', '_', filename)
+    
+    # Limiter la longueur
+    return filename.strip('_')[:100]
 
 @youtube_bp.route("/info", methods=["GET"])
 def get_video_info():
-    """
-    Obtient les informations d'une vidéo YouTube.
-    GET /youtube/info?url=...
-    """
+    """Obtient les informations d'une vidéo YouTube"""
     url = request.args.get("url")
     
     if not url:
@@ -122,7 +94,9 @@ def get_video_info():
         ydl_opts = {
             "quiet": True,
             "no_warnings": True,
-            "extract_flat": False
+            "extract_flat": False,
+            "writesubtitles": False,
+            "writeautomaticsub": False,
         }
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -132,131 +106,212 @@ def get_video_info():
 
             # Formater les informations utiles
             video_info = {
-                "title": info.get("title"),
-                "duration": info.get("duration"),
+                "title": info.get("title", "Titre non disponible"),
+                "duration": info.get("duration", 0),
                 "thumbnail": info.get("thumbnail"),
-                "channel": info.get("uploader"),
-                "views": info.get("view_count"),
-                "description": info.get("description"),
-                "formats": []
+                "channel": info.get("uploader", "Chaîne inconnue"),
+                "views": info.get("view_count", 0),
+                "description": (info.get("description", "")[:200] + "...") if info.get("description") else "",
+                "id": info.get("id"),
+                "formats_available": len(info.get("formats", []))
             }
-
-            # Ajouter les formats disponibles
-            if "formats" in info:
-                for f in info["formats"]:
-                    if f.get("height"):  # Ne garder que les formats vidéo avec une résolution
-                        video_info["formats"].append({
-                            "format_id": f.get("format_id"),
-                            "ext": f.get("ext"),
-                            "resolution": f"{f.get('height', '')}p",
-                            "filesize": f.get("filesize"),
-                            "vcodec": f.get("vcodec"),
-                            "acodec": f.get("acodec")
-                        })
 
             return jsonify(video_info)
 
     except Exception as e:
         error_msg = str(e)
-        if "Unable to extract uploader id" in error_msg:
-            return jsonify({"error": "La vidéo n'est pas accessible"}), 400
-        return jsonify({"error": f"Erreur : {error_msg}"}), 500
-
-def safe_remove_file(filepath):
-    """Supprime un fichier en toute sécurité"""
-    try:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-    except Exception as e:
-        current_app.logger.error(f"Erreur lors de la suppression de {filepath}: {str(e)}")
-
-def sanitize_filename(filename):
-    """Nettoie le nom de fichier en supprimant les caractères spéciaux et non-ASCII"""
-    # Remplace les caractères non-ASCII par leurs équivalents ASCII
-    filename = unicodedata.normalize('NFKD', filename)
-    filename = filename.encode('ASCII', 'ignore').decode('ASCII')
-    
-    # Supprime les caractères spéciaux et remplace les espaces par des underscores
-    filename = re.sub(r'[^\w\s-]', '', filename)
-    filename = re.sub(r'[-\s]+', '_', filename)
-    
-    return filename.strip('_')
+        current_app.logger.error(f"Erreur lors de l'extraction des infos YouTube: {error_msg}")
+        
+        if "Video unavailable" in error_msg or "Private video" in error_msg:
+            return jsonify({"error": "Cette vidéo n'est pas accessible (privée, supprimée ou géo-restreinte)"}), 400
+        elif "Sign in to confirm your age" in error_msg:
+            return jsonify({"error": "Cette vidéo nécessite une vérification d'âge"}), 400
+        else:
+            return jsonify({"error": f"Erreur: {error_msg}"}), 500
 
 @youtube_bp.route('/download', methods=['POST'])
 def download_video():
-    ffmpeg_path = current_app.config.get('FFMPEG_PATH')
-    if not ffmpeg_path or not os.path.exists(ffmpeg_path):
-        return jsonify({"error": "FFmpeg non trouvé"}), 500
+    """Télécharge une vidéo YouTube"""
+    # Vérifier FFmpeg d'abord
+    ffmpeg_available, ffmpeg_result = verify_ffmpeg()
+    if not ffmpeg_available:
+        return jsonify({"error": f"FFmpeg requis: {ffmpeg_result}"}), 500
 
+    ffmpeg_path = ffmpeg_result
+    
     data = request.get_json()
     if not data or 'url' not in data:
         return jsonify({"error": "URL manquante"}), 400
 
-    temp_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_youtube')
-    ensure_dir(temp_dir)
+    url = data['url']
+    format_type = data.get('format', 'video')
+    quality = data.get('quality', 'highest')
+
+    # LOGGING DÉTAILLÉ POUR DEBUG
+    current_app.logger.info(f"=== DEBUG QUALITÉ AMÉLIORÉ ===")
+    current_app.logger.info(f"URL: {url}")
+    current_app.logger.info(f"Format demandé: {format_type}")
+    current_app.logger.info(f"Qualité demandée: {quality}")
+    
+    # Créer un dossier temporaire unique
+    temp_dir = tempfile.mkdtemp()
     
     try:
-        format_type = data.get('format', 'video')
-        quality = data.get('quality', 'highest')
-        temp_filename = f"{uuid.uuid4()}"
-        output_template = os.path.join(temp_dir, f"{temp_filename}.%(ext)s")
-        
-        ydl_opts = {
-            "outtmpl": output_template,
-            "format": "bestaudio/best" if format_type == "audio" else get_format_string(quality),
-            "ffmpeg_location": ffmpeg_path,
-            "quiet": True,
-            "no_warnings": True,
-            "noplaylist": True
-        }
-
+        # Configuration yt-dlp
         if format_type == "audio":
-            ydl_opts.update({
+            format_string = "bestaudio/best"
+            current_app.logger.info(f"Format audio utilisé: {format_string}")
+            ydl_opts = {
+                "format": format_string,
+                "outtmpl": os.path.join(temp_dir, "%(title)s.%(ext)s"),
                 "postprocessors": [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
                     'preferredquality': '192',
                 }],
-                "extractaudio": True
-            })
+                "ffmpeg_location": ffmpeg_path,
+                "quiet": True,
+                "no_warnings": True,
+                "noplaylist": True,
+            }
         else:
-            ydl_opts.update({
+            format_string = get_format_string(quality)
+            current_app.logger.info(f"Format vidéo utilisé: {format_string}")
+            ydl_opts = {
+                "format": format_string,
+                "outtmpl": os.path.join(temp_dir, "%(title)s.%(ext)s"),
+                "ffmpeg_location": ffmpeg_path,
+                "quiet": False,  # Activé pour voir les détails
+                "no_warnings": False,  # Activé pour voir les warnings
+                "noplaylist": True,
                 "merge_output_format": "mp4",
-            })
+                # Options pour forcer la meilleure qualité
+                "writesubtitles": False,
+                "writeautomaticsub": False,
+                "ignoreerrors": False,
+                # Préférer les formats de haute qualité
+                "prefer_ffmpeg": True,
+                "keepvideo": False,
+            }
 
+        current_app.logger.info(f"Options yt-dlp: {ydl_opts}")
+
+        # Télécharger la vidéo
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(data['url'], download=True)
+            current_app.logger.info(f"Début téléchargement: {url}")
+            
+            # D'abord extraire les infos pour voir les formats disponibles
+            info = ydl.extract_info(url, download=False)
             if not info:
-                return jsonify({"error": "Impossible d'obtenir la vidéo"}), 400
+                return jsonify({"error": "Impossible d'extraire les informations de la vidéo"}), 400
 
-            # Déterminer le fichier de sortie
+            # LOGGING DÉTAILLÉ DES FORMATS DISPONIBLES
+            current_app.logger.info(f"Titre: {info.get('title', 'N/A')}")
+            current_app.logger.info(f"Formats disponibles: {len(info.get('formats', []))}")
+            
+            if 'formats' in info:
+                # Trier les formats par qualité pour voir les meilleurs
+                formats = info['formats']
+                video_formats = [f for f in formats if f.get('vcodec') != 'none' and f.get('height')]
+                video_formats.sort(key=lambda x: x.get('height', 0), reverse=True)
+                
+                current_app.logger.info("=== TOP 10 FORMATS VIDÉO DISPONIBLES ===")
+                for i, fmt in enumerate(video_formats[:10]):
+                    current_app.logger.info(f"{i+1}. ID: {fmt.get('format_id', 'N/A')}, "
+                                          f"Résolution: {fmt.get('height', 'N/A')}p, "
+                                          f"Codec: {fmt.get('vcodec', 'N/A')}, "
+                                          f"Ext: {fmt.get('ext', 'N/A')}, "
+                                          f"FPS: {fmt.get('fps', 'N/A')}")
+                
+                # Afficher le format qui sera sélectionné
+                selected_format = ydl._format_selection(info, format_string)
+                current_app.logger.info(f"Format sélectionné par yt-dlp: {selected_format}")
+            
+            # Maintenant télécharger avec le format optimal
+            current_app.logger.info(f"Démarrage du téléchargement avec format: {format_string}")
+            info = ydl.extract_info(url, download=True)
+            
+            if not info:
+                return jsonify({"error": "Impossible de télécharger la vidéo"}), 400
+
+            # Trouver le fichier téléchargé
+            downloaded_files = [f for f in os.listdir(temp_dir) if os.path.isfile(os.path.join(temp_dir, f))]
+            
+            if not downloaded_files:
+                return jsonify({"error": "Aucun fichier généré"}), 500
+
+            downloaded_file = os.path.join(temp_dir, downloaded_files[0])
+            
+            # LOGGING DU FICHIER TÉLÉCHARGÉ
+            file_size = os.path.getsize(downloaded_file)
+            current_app.logger.info(f"Fichier téléchargé: {downloaded_file}")
+            current_app.logger.info(f"Taille du fichier: {file_size} bytes ({file_size / (1024*1024):.2f} MB)")
+            current_app.logger.info(f"=== FIN DEBUG QUALITÉ AMÉLIORÉ ===")
+            
+            # Générer un nom de fichier sûr pour le téléchargement
+            safe_title = sanitize_filename(info.get('title', 'video'))
             if format_type == "audio":
-                output_file = os.path.join(temp_dir, f"{temp_filename}.mp3")
+                download_name = f"{safe_title}.mp3"
             else:
-                output_file = os.path.join(temp_dir, f"{temp_filename}.mp4")
+                download_name = f"{safe_title}.mp4"
 
-            if not os.path.exists(output_file):
-                return jsonify({"error": "Fichier de sortie non trouvé"}), 500
-
-            safe_title = sanitize_filename(info['title'])
-            download_name = f"{safe_title}.{'mp3' if format_type == 'audio' else 'mp4'}"
+            current_app.logger.info(f"Téléchargement réussi: {downloaded_file}")
 
             @after_this_request
             def cleanup(response):
-                safe_remove_file(output_file)
+                try:
+                    shutil.rmtree(temp_dir)
+                except Exception as e:
+                    current_app.logger.error(f"Erreur de nettoyage: {str(e)}")
                 return response
 
             return send_file(
-                output_file,
+                downloaded_file,
                 as_attachment=True,
-                download_name=download_name
+                download_name=download_name,
+                mimetype='audio/mpeg' if format_type == "audio" else 'video/mp4'
             )
 
     except Exception as e:
-        current_app.logger.error(f"Erreur de téléchargement: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        # Nettoyage en cas d'erreur
+        try:
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+        
+        error_msg = str(e)
+        current_app.logger.error(f"Erreur de téléchargement: {error_msg}")
+        
+        if "requested format not available" in error_msg.lower():
+            return jsonify({"error": "Format demandé non disponible pour cette vidéo"}), 400
+        elif "video unavailable" in error_msg.lower():
+            return jsonify({"error": "Vidéo non disponible"}), 400
+        else:
+            return jsonify({"error": f"Erreur de téléchargement: {error_msg}"}), 500
 
-    finally:
-        # Nettoyage des fichiers temporaires
-        for f in os.listdir(temp_dir):
-            safe_remove_file(os.path.join(temp_dir, f))
+@youtube_bp.route("/test", methods=["GET"])
+def test_dependencies():
+    """Endpoint de test pour vérifier les dépendances"""
+    result = {
+        "yt_dlp": False,
+        "ffmpeg": False,
+        "errors": []
+    }
+    
+    # Test yt-dlp
+    try:
+        import yt_dlp
+        result["yt_dlp"] = True
+        result["yt_dlp_version"] = yt_dlp.version.__version__
+    except ImportError as e:
+        result["errors"].append(f"yt-dlp non installé: {str(e)}")
+    
+    # Test FFmpeg
+    ffmpeg_available, ffmpeg_result = verify_ffmpeg()
+    result["ffmpeg"] = ffmpeg_available
+    if ffmpeg_available:
+        result["ffmpeg_path"] = ffmpeg_result
+    else:
+        result["errors"].append(ffmpeg_result)
+    
+    return jsonify(result)

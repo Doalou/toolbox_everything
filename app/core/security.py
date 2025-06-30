@@ -14,6 +14,18 @@ from pathlib import Path
 
 from .exceptions import SecurityError, ValidationError
 
+# Import optionnel de python-magic pour validation MIME robuste
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
+    try:
+        import filetype
+        FILETYPE_AVAILABLE = True
+    except ImportError:
+        FILETYPE_AVAILABLE = False
+
 class SecurityManager:
     """Gestionnaire de sécurité centralisé"""
     
@@ -25,6 +37,23 @@ class SecurityManager:
     
     MAX_FILENAME_LENGTH = 255
     ALLOWED_CHARS_PATTERN = re.compile(r'^[a-zA-Z0-9._\-\s]+$')
+    
+    # Mapping des extensions vers types MIME autorisés
+    SECURE_MIME_MAPPING = {
+        'jpg': ['image/jpeg'],
+        'jpeg': ['image/jpeg'],
+        'png': ['image/png'],
+        'gif': ['image/gif'],
+        'webp': ['image/webp'],
+        'mp4': ['video/mp4'],
+        'webm': ['video/webm'],
+        'avi': ['video/x-msvideo', 'video/avi'],
+        'mov': ['video/quicktime'],
+        'mkv': ['video/x-matroska'],
+        'pdf': ['application/pdf'],
+        'txt': ['text/plain'],
+        'json': ['application/json', 'text/json']
+    }
     
     @classmethod
     def sanitize_filename(cls, filename: str) -> str:
@@ -64,19 +93,128 @@ class SecurityManager:
         return True
     
     @classmethod
-    def validate_file_content(cls, file_path: str, expected_mime_type: str = None) -> bool:
-        """Valide le contenu d'un fichier via son type MIME"""
-        try:
-            actual_mime_type, _ = mimetypes.guess_type(file_path)
+    def detect_file_type(cls, file_path: str) -> Optional[str]:
+        """Détecte le type MIME réel d'un fichier"""
+        if not os.path.exists(file_path):
+            return None
             
-            if expected_mime_type and actual_mime_type != expected_mime_type:
-                raise SecurityError(
-                    f"Type MIME inattendu: {actual_mime_type}, attendu: {expected_mime_type}"
-                )
+        # Méthode 1: python-magic (le plus fiable)
+        if MAGIC_AVAILABLE:
+            try:
+                mime = magic.Magic(mime=True)
+                return mime.from_file(file_path)
+            except Exception as e:
+                current_app.logger.warning(f"Erreur python-magic: {e}")
+        
+        # Méthode 2: filetype (alternatif fiable)
+        if FILETYPE_AVAILABLE:
+            try:
+                kind = filetype.guess(file_path)
+                if kind:
+                    return kind.mime
+            except Exception as e:
+                current_app.logger.warning(f"Erreur filetype: {e}")
+        
+        # Méthode 3: fallback avec mimetypes (moins fiable)
+        mime_type, _ = mimetypes.guess_type(file_path)
+        return mime_type
+    
+    @classmethod
+    def validate_file_content(cls, file_path: str, expected_extension: str = None) -> bool:
+        """Valide le contenu d'un fichier via son type MIME réel"""
+        try:
+            actual_mime_type = cls.detect_file_type(file_path)
+            
+            if not actual_mime_type:
+                raise SecurityError("Impossible de déterminer le type de fichier")
+            
+            # Si on a une extension attendue, vérifier la cohérence
+            if expected_extension:
+                ext = expected_extension.lower().lstrip('.')
+                expected_mimes = cls.SECURE_MIME_MAPPING.get(ext, [])
                 
+                if expected_mimes and actual_mime_type not in expected_mimes:
+                    raise SecurityError(
+                        f"Type MIME détecté ({actual_mime_type}) ne correspond pas "
+                        f"à l'extension .{ext} (attendu: {', '.join(expected_mimes)})"
+                    )
+            
+            # Vérifications spécifiques selon le type
+            if actual_mime_type.startswith('text/'):
+                # Pour les fichiers texte, vérifier qu'il n'y a pas de contenu binaire suspect
+                with open(file_path, 'rb') as f:
+                    chunk = f.read(1024)
+                    # Vérifier la présence de bytes NULL ou de caractères de contrôle suspects
+                    if b'\x00' in chunk or any(b < 0x09 or (0x0E <= b <= 0x1F) for b in chunk):
+                        raise SecurityError("Fichier texte contenant des données binaires suspectes")
+            
             return True
+            
         except Exception as e:
+            if isinstance(e, SecurityError):
+                raise
             raise SecurityError(f"Erreur lors de la validation du contenu: {str(e)}")
+    
+    @classmethod
+    def validate_file_size(cls, file_path: str, max_size_mb: int = 100) -> bool:
+        """Valide la taille d'un fichier"""
+        try:
+            file_size = os.path.getsize(file_path)
+            max_size_bytes = max_size_mb * 1024 * 1024
+            
+            if file_size > max_size_bytes:
+                raise ValidationError(f"Fichier trop volumineux: {file_size} bytes (max: {max_size_bytes} bytes)")
+            
+            return True
+        except OSError as e:
+            raise SecurityError(f"Erreur lors de la vérification de la taille: {str(e)}")
+    
+    @classmethod
+    def comprehensive_file_validation(cls, file_path: str, allowed_extensions: set = None, 
+                                    max_size_mb: int = 100) -> Dict[str, Any]:
+        """Validation complète d'un fichier uploadé"""
+        filename = os.path.basename(file_path)
+        ext = Path(filename).suffix.lower().lstrip('.')
+        
+        validation_result = {
+            'valid': False,
+            'filename': filename,
+            'extension': ext,
+            'detected_mime': None,
+            'file_size': 0,
+            'errors': [],
+            'warnings': []
+        }
+        
+        try:
+            # 1. Validation du nom de fichier
+            cls.sanitize_filename(filename)
+            
+            # 2. Validation de l'extension
+            if allowed_extensions:
+                cls.validate_file_extension(filename, allowed_extensions)
+            
+            # 3. Validation de la taille
+            cls.validate_file_size(file_path, max_size_mb)
+            validation_result['file_size'] = os.path.getsize(file_path)
+            
+            # 4. Validation du contenu MIME
+            detected_mime = cls.detect_file_type(file_path)
+            validation_result['detected_mime'] = detected_mime
+            
+            if detected_mime:
+                cls.validate_file_content(file_path, ext)
+            else:
+                validation_result['warnings'].append("Type MIME non détectable")
+            
+            validation_result['valid'] = True
+            
+        except (SecurityError, ValidationError) as e:
+            validation_result['errors'].append(str(e))
+        except Exception as e:
+            validation_result['errors'].append(f"Erreur inattendue: {str(e)}")
+        
+        return validation_result
     
     @classmethod
     def generate_secure_token(cls, length: int = 32) -> str:
@@ -174,8 +312,9 @@ def secure_headers(f):
         return response
     return decorated_function
 
-def validate_file_upload(allowed_extensions: set = None, max_size_mb: int = 100):
-    """Décorateur pour valider les uploads de fichiers"""
+def validate_file_upload(allowed_extensions: set = None, max_size_mb: int = 100, 
+                        validate_content: bool = True):
+    """Décorateur pour valider les uploads de fichiers avec validation MIME"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -189,9 +328,40 @@ def validate_file_upload(allowed_extensions: set = None, max_size_mb: int = 100)
             # Valider le nom de fichier
             secure_name = SecurityManager.sanitize_filename(file.filename)
             
-            # Valider l'extension
-            if allowed_extensions:
-                SecurityManager.validate_file_extension(secure_name, allowed_extensions)
+            # Sauvegarder temporairement pour validation du contenu
+            temp_path = None
+            try:
+                if validate_content:
+                    import tempfile
+                    temp_fd, temp_path = tempfile.mkstemp()
+                    os.close(temp_fd)
+                    file.save(temp_path)
+                    
+                    # Validation complète
+                    validation_result = SecurityManager.comprehensive_file_validation(
+                        temp_path, allowed_extensions, max_size_mb
+                    )
+                    
+                    if not validation_result['valid']:
+                        raise SecurityError(f"Fichier non valide: {'; '.join(validation_result['errors'])}")
+                    
+                    # Ajouter les informations de validation à g
+                    g.file_validation = validation_result
+                    
+                    # Repositionner le curseur du fichier
+                    file.seek(0)
+                else:
+                    # Validation basique seulement
+                    if allowed_extensions:
+                        SecurityManager.validate_file_extension(secure_name, allowed_extensions)
+            
+            finally:
+                # Nettoyer le fichier temporaire
+                if temp_path and os.path.exists(temp_path):
+                    try:
+                        os.unlink(temp_path)
+                    except OSError:
+                        pass
             
             # Ajouter le nom sécurisé à la requête
             g.secure_filename = secure_name

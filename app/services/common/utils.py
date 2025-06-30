@@ -183,7 +183,6 @@ class ResourceManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cleanup()
 
-
 def validate_file_size(file_path: Union[str, Path], max_size: int) -> bool:
     """Valide la taille d'un fichier."""
     return Path(file_path).stat().st_size <= max_size
@@ -191,7 +190,5 @@ def validate_file_size(file_path: Union[str, Path], max_size: int) -> bool:
 def sanitize_filename(filename: str) -> str:
     """Nettoie et sécurise un nom de fichier."""
     import re
-    # Remplace les caractères non autorisés par des underscores
     clean_name = re.sub(r'[^\w\-_\. ]', '_', filename)
-    # Évite les noms de fichiers trop longs
     return clean_name[:255]

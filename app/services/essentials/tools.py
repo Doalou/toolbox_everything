@@ -43,7 +43,6 @@ class QRCodeGenerator:
             
             img = qr.make_image(fill_color="black", back_color="white")
             
-            # Convertir en base64
             img_buffer = BytesIO()
             img.save(img_buffer, format='PNG')
             img_str = base64.b64encode(img_buffer.getvalue()).decode()
@@ -98,7 +97,6 @@ class PasswordGenerator:
         if not char_pool:
             raise ValueError("Aucun type de caractère sélectionné")
         
-        # Générer le reste du mot de passe
         remaining_length = length - len(required_chars)
         if remaining_length < 0:
             remaining_length = 0
@@ -106,7 +104,6 @@ class PasswordGenerator:
         password_chars = required_chars + [secrets.choice(char_pool) 
                                          for _ in range(remaining_length)]
         
-        # Mélanger les caractères
         secrets.SystemRandom().shuffle(password_chars)
         
         return ''.join(password_chars)
@@ -116,7 +113,6 @@ class PasswordGenerator:
         score = 0
         feedback = []
         
-        # Longueur
         length = len(password)
         if length >= 12:
             score += 25
@@ -125,7 +121,6 @@ class PasswordGenerator:
         else:
             feedback.append("Mot de passe trop court")
         
-        # Types de caractères
         has_lower = any(c.islower() for c in password)
         has_upper = any(c.isupper() for c in password)
         has_digit = any(c.isdigit() for c in password)
@@ -137,12 +132,10 @@ class PasswordGenerator:
         if char_types < 3:
             feedback.append("Utilisez différents types de caractères")
         
-        # Patterns répétitifs
         if re.search(r'(.)\1{2,}', password):
             score -= 10
             feedback.append("Évitez les caractères répétitifs")
         
-        # Déterminer le niveau
         if score >= 80:
             level = "Très fort"
             color = "green"
@@ -171,7 +164,6 @@ class TextProcessor:
         lines = text.split('\n')
         words = text.split()
         
-        # Statistiques de base
         stats = {
             'characters': len(text),
             'characters_no_spaces': len(text.replace(' ', '')),
@@ -181,26 +173,23 @@ class TextProcessor:
             'sentences': len(re.findall(r'[.!?]+', text)),
         }
         
-        # Statistiques avancées
         if words:
             stats['avg_word_length'] = sum(len(word) for word in words) / len(words)
             stats['longest_word'] = max(words, key=len)
             stats['shortest_word'] = min(words, key=len)
         
-        # Fréquence des mots
         word_freq = {}
         for word in words:
             clean_word = re.sub(r'[^\w]', '', word.lower())
             if clean_word:
                 word_freq[clean_word] = word_freq.get(clean_word, 0) + 1
         
-        # Top 10 des mots les plus fréquents
         most_common = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10]
         
         return {
             'statistics': stats,
             'most_common_words': most_common,
-            'reading_time': round(len(words) / 200)  # Mots par minute moyen
+            'reading_time': round(len(words) / 200)
         }
     
     def format_text(self, text: str, format_type: str) -> str:
@@ -222,11 +211,8 @@ class TextProcessor:
     
     def clean_text(self, text: str) -> str:
         """Nettoie le texte des caractères indésirables"""
-        # Supprimer les espaces multiples
         text = re.sub(r'\s+', ' ', text)
-        # Supprimer les caractères de contrôle
         text = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', text)
-        # Nettoyer les sauts de ligne multiples
         text = re.sub(r'\n\s*\n', '\n\n', text)
         return text.strip()
 
@@ -236,7 +222,6 @@ class ColorPaletteGenerator:
     def generate(self, base_color: str, palette_type: str, count: int) -> List[Dict[str, str]]:
         """Génère une palette de couleurs"""
         try:
-            # Convertir la couleur de base en HSV
             base_rgb = self._hex_to_rgb(base_color)
             base_hsv = colorsys.rgb_to_hsv(*[c/255.0 for c in base_rgb])
             
@@ -259,21 +244,17 @@ class ColorPaletteGenerator:
             raise ValueError(f"Erreur lors de la génération de la palette: {str(e)}")
     
     def _hex_to_rgb(self, hex_color: str) -> tuple:
-        """Convertit une couleur hex en RGB"""
         hex_color = hex_color.lstrip('#')
         return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     
     def _rgb_to_hex(self, rgb: tuple) -> str:
-        """Convertit RGB en hex"""
         return f"#{int(rgb[0]):02x}{int(rgb[1]):02x}{int(rgb[2]):02x}"
     
     def _generate_monochromatic(self, base_hsv: tuple, count: int) -> List[Dict[str, str]]:
-        """Génère une palette monochromatique"""
         colors = []
         h, s, v = base_hsv
         
         for i in range(count):
-            # Varier la saturation et la luminosité
             new_s = max(0.1, min(1.0, s + (i - count//2) * 0.15))
             new_v = max(0.1, min(1.0, v + (i - count//2) * 0.1))
             
@@ -288,13 +269,11 @@ class ColorPaletteGenerator:
         return colors
     
     def _generate_analogous(self, base_hsv: tuple, count: int) -> List[Dict[str, str]]:
-        """Génère une palette analogique"""
         colors = []
         h, s, v = base_hsv
         
         for i in range(count):
-            # Varier la teinte de ±30 degrés
-            new_h = (h + (i - count//2) * 0.083) % 1.0  # 30°/360° = 0.083
+            new_h = (h + (i - count//2) * 0.083) % 1.0
             
             rgb = colorsys.hsv_to_rgb(new_h, s, v)
             rgb = tuple(int(c * 255) for c in rgb)
@@ -307,11 +286,9 @@ class ColorPaletteGenerator:
         return colors
     
     def _generate_complementary(self, base_hsv: tuple, count: int) -> List[Dict[str, str]]:
-        """Génère une palette complémentaire"""
         colors = []
         h, s, v = base_hsv
         
-        # Couleur de base
         rgb = colorsys.hsv_to_rgb(h, s, v)
         rgb = tuple(int(c * 255) for c in rgb)
         colors.append({
@@ -319,7 +296,6 @@ class ColorPaletteGenerator:
             'rgb': f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
         })
         
-        # Couleur complémentaire
         comp_h = (h + 0.5) % 1.0
         rgb = colorsys.hsv_to_rgb(comp_h, s, v)
         rgb = tuple(int(c * 255) for c in rgb)
@@ -328,7 +304,6 @@ class ColorPaletteGenerator:
             'rgb': f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
         })
         
-        # Remplir avec des variations
         while len(colors) < count:
             variation_h = h if len(colors) % 2 == 0 else comp_h
             new_s = max(0.1, min(1.0, s + (len(colors) * 0.1)))
@@ -344,16 +319,13 @@ class ColorPaletteGenerator:
         return colors[:count]
     
     def _generate_triadic(self, base_hsv: tuple, count: int) -> List[Dict[str, str]]:
-        """Génère une palette triadique"""
         colors = []
         h, s, v = base_hsv
         
-        # Trois couleurs espacées de 120°
         hues = [h, (h + 0.333) % 1.0, (h + 0.666) % 1.0]
         
         for i in range(count):
             current_h = hues[i % 3]
-            # Varier légèrement s et v
             new_s = max(0.1, min(1.0, s + (i // 3) * 0.1))
             new_v = max(0.1, min(1.0, v - (i // 3) * 0.05))
             
@@ -368,7 +340,6 @@ class ColorPaletteGenerator:
         return colors
     
     def _generate_random(self, count: int) -> List[Dict[str, str]]:
-        """Génère une palette aléatoire"""
         colors = []
         for _ in range(count):
             h = secrets.randbelow(360) / 360.0
@@ -388,7 +359,6 @@ class ColorPaletteGenerator:
 class URLValidator:
     """Validateur et analyseur d'URLs"""
     
-    # Liste blanche par défaut des domaines autorisés
     DEFAULT_ALLOWED_DOMAINS = {
         'google.com', 'www.google.com',
         'github.com', 'www.github.com', 
@@ -397,54 +367,39 @@ class URLValidator:
         'python.org', 'www.python.org',
         'mozilla.org', 'www.mozilla.org',
         'cloudflare.com', 'www.cloudflare.com',
-        'example.com', 'www.example.com'  # Pour les tests
+        'example.com', 'www.example.com'
     }
     
-    # Préfixes de domaines autorisés par défaut (pour les sous-domaines)
     DEFAULT_ALLOWED_DOMAIN_PREFIXES = {
         '.google.com', '.github.com', '.stackoverflow.com',
         '.wikipedia.org', '.python.org', '.mozilla.org',
         '.cloudflare.com'
     }
     
-    # Schemes autorisés
     ALLOWED_SCHEMES = {'http', 'https'}
     
     def __init__(self, allowed_domains=None, allowed_domain_prefixes=None):
-        """
-        Initialise le validateur avec des domaines autorisés personnalisés
-        
-        Args:
-            allowed_domains: Set des domaines autorisés (optionnel)
-            allowed_domain_prefixes: Set des préfixes de domaines autorisés (optionnel)
-        """
         try:
             from flask import current_app
-            # Utiliser la configuration de l'application si disponible
             self.allowed_domains = current_app.config.get('URL_VALIDATOR_ALLOWED_DOMAINS', self.DEFAULT_ALLOWED_DOMAINS)
             self.allowed_domain_prefixes = current_app.config.get('URL_VALIDATOR_ALLOWED_DOMAIN_SUFFIXES', self.DEFAULT_ALLOWED_DOMAIN_PREFIXES)
         except RuntimeError:
-            # Pas de contexte Flask, utiliser les valeurs par défaut ou les paramètres
             self.allowed_domains = allowed_domains or self.DEFAULT_ALLOWED_DOMAINS
             self.allowed_domain_prefixes = allowed_domain_prefixes or self.DEFAULT_ALLOWED_DOMAIN_PREFIXES
     
     def _is_private_ip(self, ip: str) -> bool:
-        """Vérifie si une adresse IP est privée"""
         try:
             ip_obj = ipaddress.ip_address(ip)
             return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
         except ValueError:
-            return True  # En cas d'erreur, considérer comme privée par sécurité
+            return True
     
     def _is_domain_allowed(self, domain: str) -> bool:
-        """Vérifie si un domaine est autorisé"""
         domain = domain.lower().strip()
         
-        # Vérification directe dans la liste blanche
         if domain in self.allowed_domains:
             return True
         
-        # Vérification des préfixes pour les sous-domaines
         for prefix in self.allowed_domain_prefixes:
             if domain.endswith(prefix):
                 return True
@@ -452,12 +407,9 @@ class URLValidator:
         return False
     
     def _resolve_domain_safely(self, domain: str) -> Dict[str, Any]:
-        """Résout un domaine de manière sécurisée"""
         try:
-            # Résolution DNS
             ip_addresses = socket.gethostbyname_ex(domain)[2]
             
-            # Vérification que toutes les IPs résolues ne sont pas privées
             for ip in ip_addresses:
                 if self._is_private_ip(ip):
                     return {
@@ -489,7 +441,6 @@ class URLValidator:
         try:
             parsed = urlparse(url)
             
-            # Validation de base
             is_valid = bool(parsed.scheme and parsed.netloc)
             
             analysis = {
@@ -512,20 +463,16 @@ class URLValidator:
                 analysis['security_check']['reasons'].append('URL mal formée')
                 return analysis
             
-            # Validation du scheme
             if parsed.scheme not in self.ALLOWED_SCHEMES:
                 analysis['security_check']['reasons'].append(f'Scheme non autorisé: {parsed.scheme}')
                 return analysis
             
-            # Extraction du domaine (sans port)
             domain = parsed.netloc.split(':')[0]
             
-            # Validation du domaine contre la liste blanche
             if not self._is_domain_allowed(domain):
                 analysis['security_check']['reasons'].append(f'Domaine non autorisé: {domain}')
                 return analysis
             
-            # Résolution DNS sécurisée
             dns_result = self._resolve_domain_safely(domain)
             analysis['dns_resolution'] = dns_result
             
@@ -533,15 +480,12 @@ class URLValidator:
                 analysis['security_check']['reasons'].append(dns_result['reason'])
                 return analysis
             
-            # Si toutes les validations passent
             analysis['security_check']['passed'] = True
             analysis['is_secure'] = parsed.scheme == 'https'
             analysis['has_query'] = bool(parsed.query)
             analysis['has_fragment'] = bool(parsed.fragment)
             
-            # Tentative de requête HTTP sécurisée
             try:
-                # Headers de sécurité pour la requête
                 headers = {
                     'User-Agent': 'Toolbox-URL-Validator/1.0',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -552,7 +496,7 @@ class URLValidator:
                     timeout=5, 
                     allow_redirects=True,
                     headers=headers,
-                    verify=True  # Vérification SSL
+                    verify=True
                 )
                 
                 analysis['status'] = {
@@ -562,7 +506,6 @@ class URLValidator:
                     'headers': dict(response.headers)
                 }
                 
-                # Vérification de redirection sécurisée
                 if response.url != url:
                     final_parsed = urlparse(response.url)
                     final_domain = final_parsed.netloc.split(':')[0]
@@ -603,7 +546,6 @@ class HashCalculator:
     ALGORITHMS = ['md5', 'sha1', 'sha256', 'sha512']
     
     def calculate(self, text: str, algorithm: str = 'sha256') -> Dict[str, str]:
-        """Calcule le hash d'un texte"""
         if algorithm not in self.ALGORITHMS:
             raise ValueError(f"Algorithme non supporté: {algorithm}")
         
@@ -625,7 +567,6 @@ class Base64Encoder:
     """Encodeur/Décodeur Base64"""
     
     def encode(self, text: str) -> str:
-        """Encode en Base64"""
         try:
             encoded = base64.b64encode(text.encode('utf-8')).decode('ascii')
             return encoded
@@ -633,7 +574,6 @@ class Base64Encoder:
             raise ValueError(f"Erreur lors de l'encodage: {str(e)}")
     
     def decode(self, encoded_text: str) -> str:
-        """Décode du Base64"""
         try:
             decoded = base64.b64decode(encoded_text.encode('ascii')).decode('utf-8')
             return decoded
@@ -644,9 +584,7 @@ class JSONFormatter:
     """Formateur JSON"""
     
     def process(self, json_text: str, operation: str = 'format') -> Dict[str, Any]:
-        """Traite du JSON"""
         try:
-            # Validation
             parsed = json.loads(json_text)
             
             result = {
@@ -672,7 +610,6 @@ class JSONFormatter:
             }
     
     def _analyze_structure(self, obj: Any, depth: int = 0) -> Dict[str, Any]:
-        """Analyse la structure d'un objet JSON"""
         if isinstance(obj, dict):
             return {
                 'type': 'object',
@@ -685,20 +622,19 @@ class JSONFormatter:
                 'type': 'array',
                 'length': len(obj),
                 'depth': depth,
-                'items': [self._analyze_structure(item, depth + 1) for item in obj[:5]]  # Limiter à 5
+                'items': [self._analyze_structure(item, depth + 1) for item in obj[:5]]
             }
         else:
             return {
                 'type': type(obj).__name__,
                 'depth': depth,
-                'value': str(obj)[:100]  # Limiter la longueur
+                'value': str(obj)[:100]
             }
 
 class TimestampConverter:
     """Convertisseur de timestamps"""
     
     def timestamp_to_date(self, timestamp: int, tz: str = 'UTC') -> Dict[str, Any]:
-        """Convertit un timestamp en date"""
         try:
             dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
             
@@ -718,9 +654,7 @@ class TimestampConverter:
             raise ValueError(f"Timestamp invalide: {str(e)}")
     
     def date_to_timestamp(self, date_str: str, tz: str = 'UTC') -> Dict[str, Any]:
-        """Convertit une date en timestamp"""
         try:
-            # Essayer plusieurs formats
             formats = [
                 '%Y-%m-%d %H:%M:%S',
                 '%Y-%m-%d',
@@ -740,7 +674,6 @@ class TimestampConverter:
             if dt is None:
                 raise ValueError("Format de date non reconnu")
             
-            # Appliquer le timezone UTC
             dt = dt.replace(tzinfo=timezone.utc)
             timestamp = int(dt.timestamp())
             
@@ -755,7 +688,6 @@ class TimestampConverter:
             raise ValueError(f"Date invalide: {str(e)}")
     
     def current_timestamp(self) -> Dict[str, Any]:
-        """Retourne le timestamp actuel"""
         now = datetime.now(timezone.utc)
         timestamp = int(now.timestamp())
         

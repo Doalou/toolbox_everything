@@ -2,9 +2,9 @@
 Exceptions personnalisées pour Toolbox Everything
 """
 import logging
-from typing import Optional, Dict, Any
-from flask import jsonify, current_app
-from werkzeug.exceptions import HTTPException
+from typing import Optional, Dict, Any, List
+from flask import jsonify, current_app, request
+from werkzeug.exceptions import HTTPException, RequestEntityTooLarge, UnsupportedMediaType
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,15 @@ class ValidationError(ToolboxBaseException):
         super().__init__(message, "VALIDATION_ERROR", 400, **kwargs)
         if field:
             self.details['field'] = field
+
+class BatchValidationError(ToolboxBaseException):
+    """Erreur de validation pour plusieurs éléments"""
+    
+    def __init__(self, errors: List[Dict[str, Any]], **kwargs):
+        message = f"Validation échouée pour {len(errors)} élément(s)"
+        super().__init__(message, "BATCH_VALIDATION_ERROR", 400, **kwargs)
+        self.details['validation_errors'] = errors
+        self.validation_errors = errors
 
 class FileProcessingError(ToolboxBaseException):
     """Erreur lors du traitement de fichiers"""
@@ -90,6 +99,14 @@ class ExternalServiceError(ToolboxBaseException):
         super().__init__(message, "EXTERNAL_SERVICE_ERROR", 502, **kwargs)
         if service_name:
             self.details['service_name'] = service_name
+
+class ConfigurationError(ToolboxBaseException):
+    """Erreur de configuration"""
+    
+    def __init__(self, message: str, config_key: str = None, **kwargs):
+        super().__init__(message, "CONFIGURATION_ERROR", 500, **kwargs)
+        if config_key:
+            self.details['config_key'] = config_key
 
 def register_error_handlers(app):
     """Enregistre les gestionnaires d'erreurs globaux"""

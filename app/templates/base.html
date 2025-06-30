@@ -84,75 +84,183 @@
 </head>
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-        <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90 shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <a href="{{ url_for('index') }}" class="flex items-center space-x-3 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-all">
-                            <i class="fas fa-tools text-2xl floating-icon"></i>
-                            <span class="text-xl font-bold animated-gradient-text">Toolbox Everything</span>
+        <!-- Navigation Bar Moderne -->
+        <nav class="relative">
+            <!-- Barre principale avec glassmorphism -->
+            <div class="bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg border-b border-indigo-200/40 dark:border-slate-700/60 sticky top-0 z-50 shadow-md shadow-indigo-500/10 dark:shadow-slate-900/30">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex items-center justify-between px-6 py-3">
+                        
+                        <!-- Logo Section avec design géométrique -->
+                        <a href="{{ url_for('index') }}" class="flex items-center space-x-4 group relative">
+                            <!-- Icône géométrique moderne -->
+                            <div class="relative w-10 h-10">
+                                <div class="absolute inset-0 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-xl transform rotate-45 group-hover:rotate-[60deg] transition-transform duration-500"></div>
+                                <div class="absolute inset-1 bg-white dark:bg-slate-900 rounded-lg transform rotate-45"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <i class="fas fa-cube text-slate-700 dark:text-white text-lg transform -rotate-45"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Texte du logo -->
+                            <div class="flex flex-col">
+                                <span class="text-2xl font-black bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 dark:from-white dark:via-cyan-400 dark:to-purple-400 bg-clip-text text-transparent">
+                                    Toolbox
+                                </span>
+                                <span class="text-xs font-medium text-slate-500 dark:text-slate-400 -mt-1 tracking-[0.2em]">
+                                    EVERYTHING
+                                </span>
+                            </div>
+                            
+                            <!-- Effet de lueur au hover -->
+                            <div class="absolute -inset-2 bg-gradient-to-r from-cyan-400/20 to-purple-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
                         </a>
+
+                        <!-- Navigation principale (desktop) -->
+                        <div class="hidden lg:flex items-center space-x-3">
+                            <!-- Menu Essentiels avec style capsule -->
+                            <div class="relative group">
+                                <button class="premium-nav-button essentials-btn group/btn" aria-haspopup="true" aria-expanded="false">
+                                    <div class="relative z-10 flex items-center space-x-3">
+                                        <div class="relative">
+                                            <div class="w-2.5 h-2.5 bg-violet-500 rounded-full animate-pulse shadow-sm"></div>
+                                            <div class="absolute inset-0 w-2.5 h-2.5 bg-violet-400 rounded-full animate-ping opacity-30"></div>
+                                        </div>
+                                        <span class="font-semibold tracking-wide">Essentiels</span>
+                                        <i class="fas fa-chevron-down text-xs opacity-70 group-hover:rotate-180 group-hover:opacity-100 transition-all duration-300"></i>
                     </div>
-                    <div class="hidden md:flex items-center space-x-6">
-                        <div class="relative group">
-                            <button class="nav-link text-gray-600 dark:text-gray-100 flex items-center">
-                                <i class="fas fa-th-large mr-2"></i>Essentiels
-                                <i class="fas fa-chevron-down ml-1 text-xs opacity-70 group-hover:rotate-180 transition-transform duration-300"></i>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-violet-600/20 via-purple-500/20 to-violet-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
                             </button>
-                            <div class="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 scale-0 group-hover:scale-100 origin-top transform z-20 transition-transform duration-150 ease-in-out border border-gray-200 dark:border-gray-700">
-                                <div class="py-1 grid grid-cols-1 gap-1 p-2">
-                                    <a href="{{ url_for('essentials.qr_generator') }}" class="dropdown-item glow-effect">
-                                        <i class="fas fa-qrcode text-blue-500 dark:text-blue-400 mr-2 w-5 text-center"></i>QR Code
-                                    </a>
-                                    <a href="{{ url_for('essentials.password_generator') }}" class="dropdown-item glow-effect">
-                                        <i class="fas fa-key text-green-500 dark:text-green-400 mr-2 w-5 text-center"></i>Mot de passe
-                                    </a>
-                                    <a href="{{ url_for('essentials.text_processor') }}" class="dropdown-item glow-effect">
-                                        <i class="fas fa-file-alt text-purple-500 dark:text-purple-400 mr-2 w-5 text-center"></i>Texte
-                                    </a>
-                                    <a href="{{ url_for('essentials.color_palette') }}" class="dropdown-item glow-effect">
-                                        <i class="fas fa-palette text-pink-500 dark:text-pink-400 mr-2 w-5 text-center"></i>Palette
-                                    </a>
-                                    <a href="{{ url_for('essentials.hash_calculator') }}" class="dropdown-item glow-effect">
-                                        <i class="fas fa-hashtag text-red-500 dark:text-red-400 mr-2 w-5 text-center"></i>Hash
-                                    </a>
-                                    <a href="{{ url_for('essentials.base64_tool') }}" class="dropdown-item glow-effect">
-                                        <i class="fas fa-code text-yellow-500 dark:text-yellow-400 mr-2 w-5 text-center"></i>Base64
-                                    </a>
+                                
+                                <!-- Dropdown moderne -->
+                                <div class="absolute top-full left-0 mt-3 w-80 opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transform origin-top transition-all duration-300 z-50">
+                                    <div class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-violet-500/25 dark:shadow-slate-900/50 border border-violet-200/40 dark:border-slate-700/60 p-6 ring-1 ring-violet-500/10">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <a href="{{ url_for('essentials.qr_generator') }}" class="premium-dropdown-item group">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 group-hover:scale-110 transition-all duration-300">
+                                                    <i class="fas fa-qrcode text-white text-sm"></i>
+                                                </div>
+                                                <span>QR Code</span>
+                                            </a>
+                                            <a href="{{ url_for('essentials.password_generator') }}" class="premium-dropdown-item group">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 group-hover:scale-110 transition-all duration-300">
+                                                    <i class="fas fa-key text-white text-sm"></i>
+                                                </div>
+                                                <span>Mot de passe</span>
+                                            </a>
+                                            <a href="{{ url_for('essentials.text_processor') }}" class="premium-dropdown-item group">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:shadow-purple-500/40 group-hover:scale-110 transition-all duration-300">
+                                                    <i class="fas fa-file-alt text-white text-sm"></i>
+                                                </div>
+                                                <span>Texte</span>
+                                            </a>
+                                            <a href="{{ url_for('essentials.color_palette') }}" class="premium-dropdown-item group">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-pink-500/25 group-hover:shadow-pink-500/40 group-hover:scale-110 transition-all duration-300">
+                                                    <i class="fas fa-palette text-white text-sm"></i>
+                                                </div>
+                                                <span>Palette</span>
+                                            </a>
+                                            <a href="{{ url_for('essentials.hash_calculator') }}" class="premium-dropdown-item group">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25 group-hover:shadow-red-500/40 group-hover:scale-110 transition-all duration-300">
+                                                    <i class="fas fa-hashtag text-white text-sm"></i>
+                                                </div>
+                                                <span>Hash</span>
+                                            </a>
+                                            <a href="{{ url_for('essentials.base64_tool') }}" class="premium-dropdown-item group">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25 group-hover:shadow-amber-500/40 group-hover:scale-110 transition-all duration-300">
+                                                    <i class="fas fa-code text-white text-sm"></i>
+                                                </div>
+                                                <span>Base64</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- YouTube -->
+                            <a href="{{ url_for('youtube.index') }}" class="premium-nav-button youtube-btn group" aria-label="YouTube Downloader">
+                                <div class="relative z-10 flex items-center space-x-3">
+                                    <div class="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-red-500/40 transition-all duration-300">
+                                        <i class="fab fa-youtube text-white text-sm"></i>
+                                    </div>
+                                    <span class="font-semibold tracking-wide">YouTube</span>
+                                </div>
+                                <div class="absolute inset-0 bg-gradient-to-r from-red-500/20 via-rose-500/20 to-red-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
+                            </a>
+
+                            <!-- Conversion -->
+                            <a href="{{ url_for('media.index') }}" class="premium-nav-button conversion-btn group" aria-label="Convertisseur Média">
+                                <div class="relative z-10 flex items-center space-x-3">
+                                    <div class="w-6 h-6 bg-cyan-500 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-cyan-500/40 transition-all duration-300">
+                                        <i class="fas fa-exchange-alt text-white text-sm"></i>
+                                    </div>
+                                    <span class="font-semibold tracking-wide">Conversion</span>
+                                </div>
+                                <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-cyan-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
+                            </a>
+
+                            <!-- PDF (bientôt) -->
+                            <div class="premium-nav-button pdf-btn disabled group">
+                                <div class="relative z-10 flex items-center space-x-3">
+                                    <div class="w-6 h-6 bg-slate-400 rounded-lg flex items-center justify-center shadow-sm">
+                                        <i class="fas fa-file-pdf text-white text-sm"></i>
+                                    </div>
+                                    <span class="font-semibold tracking-wide">PDF</span>
+                                    <span class="premium-badge">bientôt</span>
                                 </div>
                             </div>
                         </div>
-                        <a href="{{ url_for('youtube.index') }}" class="nav-link text-gray-600 dark:text-gray-100">
-                            <i class="fab fa-youtube mr-2 text-red-500"></i>YouTube
-                        </a>
-                        <a href="{{ url_for('media.index') }}" class="nav-link text-gray-600 dark:text-gray-100">
-                            <i class="far fa-images mr-2 text-blue-500"></i>Conversion
-                        </a>
-                        <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ml-4 pulse-on-hover">
-                            <i class="fas fa-moon text-gray-600 dark:text-gray-400 dark:hidden"></i>
-                            <i class="fas fa-sun text-yellow-400 hidden dark:block"></i>
+
+                        <!-- Zone droite avec toggle thème -->
+                        <div class="flex items-center space-x-4">
+                            <!-- Toggle thème compact -->
+                            <button onclick="toggleTheme()" class="premium-theme-toggle group">
+                                <div class="theme-toggle-track">
+                                    <div class="theme-toggle-thumb">
+                                        <i class="fas fa-sun theme-icon sun-icon dark:hidden"></i>
+                                        <i class="fas fa-moon theme-icon moon-icon hidden dark:block"></i>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <!-- Menu mobile trigger compact -->
+                            <button id="mobileMenuBtn" class="lg:hidden premium-mobile-trigger group">
+                                <i class="fas fa-bars text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-white transition-colors duration-300"></i>
                         </button>
                     </div>
-                    <div class="md:hidden flex items-center">
-                        <button id="mobileMenuBtn" class="text-gray-600 dark:text-gray-100 focus:outline-none">
-                            <i class="fas fa-bars text-xl"></i>
-                        </button>
                     </div>
                 </div>
             </div>
-            <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <div class="px-2 pt-2 pb-3 space-y-1">
-                    <div class="mobile-menu-group">
-                        <div class="mobile-menu-header" onclick="toggleMobileSubMenu('essentials')">
-                            <span><i class="fas fa-th-large mr-2"></i>Essentiels</span>
-                            <i class="fas fa-chevron-down text-xs transition-transform duration-300" id="essentials-chevron"></i>
+
+            <!-- Menu mobile moderne -->
+            <div id="mobileMenu" class="lg:hidden hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
+                <div class="absolute right-0 top-0 h-full w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl transform translate-x-full transition-transform duration-300" id="mobileMenuPanel">
+                    <div class="p-6 space-y-6">
+                        <!-- Header du menu mobile -->
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Navigation</h3>
+                            <button id="closeMobileMenu" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
-                        <div class="mobile-submenu hidden" id="essentials-submenu">
+
+                        <!-- Menu items -->
+                        <div class="space-y-3">
+                            <!-- Essentiels expansible -->
+                            <div class="mobile-menu-section">
+                                <button class="mobile-menu-header" onclick="toggleMobileSubMenu('essentials')">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 bg-violet-500 rounded-full"></div>
+                                        <span>Essentiels</span>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-xs transition-transform duration-300" id="essentials-chevron"></i>
+                                </button>
+                                <div class="mobile-submenu hidden mt-2 space-y-2" id="essentials-submenu">
                             <a href="{{ url_for('essentials.qr_generator') }}" class="mobile-submenu-item">
                                 <i class="fas fa-qrcode text-blue-500 dark:text-blue-400 mr-2"></i>QR Code
                             </a>
                             <a href="{{ url_for('essentials.password_generator') }}" class="mobile-submenu-item">
-                                <i class="fas fa-key text-green-500 dark:text-green-400 mr-2"></i>Mot de passe
+                                        <i class="fas fa-key text-emerald-500 dark:text-emerald-400 mr-2"></i>Mot de passe
                             </a>
                             <a href="{{ url_for('essentials.text_processor') }}" class="mobile-submenu-item">
                                 <i class="fas fa-file-alt text-purple-500 dark:text-purple-400 mr-2"></i>Texte
@@ -164,22 +272,45 @@
                                 <i class="fas fa-hashtag text-red-500 dark:text-red-400 mr-2"></i>Hash
                             </a>
                             <a href="{{ url_for('essentials.base64_tool') }}" class="mobile-submenu-item">
-                                <i class="fas fa-code text-yellow-500 dark:text-yellow-400 mr-2"></i>Base64
+                                        <i class="fas fa-code text-amber-500 dark:text-amber-400 mr-2"></i>Base64
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- YouTube -->
+                            <a href="{{ url_for('youtube.index') }}" class="mobile-nav-item">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-youtube text-red-600 dark:text-red-400"></i>
+                                    </div>
+                                    <span>YouTube</span>
+                                </div>
                             </a>
+
+                            <!-- Conversion -->
+                            <a href="{{ url_for('media.index') }}" class="mobile-nav-item">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-exchange-alt text-cyan-600 dark:text-cyan-400"></i>
+                                    </div>
+                                    <span>Conversion</span>
+                                </div>
+                            </a>
+
+                            <!-- PDF (bientôt) -->
+                            <div class="mobile-nav-item opacity-50 cursor-not-allowed">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-file-pdf text-gray-500 dark:text-gray-400"></i>
+                                        </div>
+                                        <span>PDF</span>
+                                    </div>
+                                    <span class="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-full">bientôt</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <a href="{{ url_for('youtube.index') }}" class="mobile-menu-item">
-                        <i class="fab fa-youtube mr-2 text-red-500"></i>YouTube
-                    </a>
-                    <a href="{{ url_for('media.index') }}" class="mobile-menu-item">
-                        <i class="far fa-images mr-2 text-blue-500"></i>Conversion
-                    </a>
-                    <button onclick="toggleTheme()" class="mobile-menu-item w-full text-left">
-                        <i class="fas fa-moon mr-2 dark:hidden"></i>
-                        <i class="fas fa-sun mr-2 hidden dark:inline-block text-yellow-400"></i>
-                        <span class="dark:hidden">Mode sombre</span>
-                        <span class="hidden dark:inline-block">Mode clair</span>
-                    </button>
                 </div>
             </div>
         </nav>
@@ -283,9 +414,30 @@
             
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const mobileMenu = document.getElementById('mobileMenu');
+            const mobileMenuPanel = document.getElementById('mobileMenuPanel');
+            const closeMobileMenu = document.getElementById('closeMobileMenu');
             
+            // Ouvrir le menu mobile
             mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
+                mobileMenu.classList.remove('hidden');
+                setTimeout(() => {
+                    mobileMenuPanel.classList.remove('translate-x-full');
+                }, 10);
+            });
+            
+            // Fermer le menu mobile
+            const closeMobileMenuFn = () => {
+                mobileMenuPanel.classList.add('translate-x-full');
+                setTimeout(() => {
+                    mobileMenu.classList.add('hidden');
+                }, 300);
+            };
+            
+            closeMobileMenu.addEventListener('click', closeMobileMenuFn);
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target === mobileMenu) {
+                    closeMobileMenuFn();
+                }
             });
         });
         
@@ -304,47 +456,312 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
     <style>
-        .nav-link {
-            @apply relative px-3 py-2 hover:text-primary-600 
-                   dark:hover:text-primary-400 transition-colors duration-200;
-        }
-        .nav-link::after {
-            @apply content-[''] absolute left-0 right-0 bottom-0 h-0.5 bg-primary-500 
-                   dark:bg-primary-400 scale-x-0 transition-transform duration-200;
-        }
-        .nav-link:hover::after {
-            @apply scale-x-100;
+        /* Boutons Premium Navigation */
+        .premium-nav-button {
+            @apply relative px-5 py-2.5 rounded-2xl font-medium text-sm transition-all duration-500 transform-gpu
+                   cursor-pointer select-none overflow-hidden hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.1);
         }
         
-        .dropdown-item {
-            @apply flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 
-                   hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white
-                   rounded-md transition-all duration-200;
+        /* Mode Clair */
+        .premium-nav-button {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.8) 100%);
+            border: 1px solid rgba(255,255,255,0.3);
         }
         
-        .mobile-menu-item {
-            @apply block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300
-                   hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+        /* Mode Sombre */
+        .dark .premium-nav-button {
+            background: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(51,65,85,0.8) 100%);
+            border: 1px solid rgba(71,85,105,0.4);
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3);
         }
         
-        .mobile-menu-group {
-            @apply mb-1 rounded-md overflow-hidden;
+        .premium-nav-button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .dark .premium-nav-button:before {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+        
+        .premium-nav-button:hover:before {
+            left: 100%;
+        }
+        
+        /* Boutons spécifiques avec couleurs améliorées */
+        .essentials-btn {
+            @apply text-violet-700 dark:text-violet-200;
+            background: linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(168,85,247,0.1) 100%);
+            border-color: rgba(139,92,246,0.3);
+        }
+        
+        .dark .essentials-btn {
+            background: linear-gradient(135deg, rgba(139,92,246,0.2) 0%, rgba(168,85,247,0.15) 100%);
+            border-color: rgba(139,92,246,0.4);
+        }
+        
+        .essentials-btn:hover {
+            @apply shadow-violet-500/30 shadow-xl transform scale-[1.05];
+            background: linear-gradient(135deg, rgba(139,92,246,0.25) 0%, rgba(168,85,247,0.2) 100%);
+            border-color: rgba(139,92,246,0.5);
+        }
+        
+        .dark .essentials-btn:hover {
+            @apply shadow-violet-400/20;
+            background: linear-gradient(135deg, rgba(139,92,246,0.3) 0%, rgba(168,85,247,0.25) 100%);
+            border-color: rgba(139,92,246,0.6);
+        }
+        
+        .youtube-btn {
+            @apply text-red-700 dark:text-red-200;
+            background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(248,113,113,0.1) 100%);
+            border-color: rgba(239,68,68,0.3);
+        }
+        
+        .dark .youtube-btn {
+            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(248,113,113,0.15) 100%);
+            border-color: rgba(239,68,68,0.4);
+        }
+        
+        .youtube-btn:hover {
+            @apply shadow-red-500/30 shadow-xl transform scale-[1.05];
+            background: linear-gradient(135deg, rgba(239,68,68,0.25) 0%, rgba(248,113,113,0.2) 100%);
+            border-color: rgba(239,68,68,0.5);
+        }
+        
+        .dark .youtube-btn:hover {
+            @apply shadow-red-400/20;
+            background: linear-gradient(135deg, rgba(239,68,68,0.3) 0%, rgba(248,113,113,0.25) 100%);
+            border-color: rgba(239,68,68,0.6);
+        }
+        
+        .conversion-btn {
+            @apply text-cyan-700 dark:text-cyan-200;
+            background: linear-gradient(135deg, rgba(6,182,212,0.15) 0%, rgba(34,211,238,0.1) 100%);
+            border-color: rgba(6,182,212,0.3);
+        }
+        
+        .dark .conversion-btn {
+            background: linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(34,211,238,0.15) 100%);
+            border-color: rgba(6,182,212,0.4);
+        }
+        
+        .conversion-btn:hover {
+            @apply shadow-cyan-500/30 shadow-xl transform scale-[1.05];
+            background: linear-gradient(135deg, rgba(6,182,212,0.25) 0%, rgba(34,211,238,0.2) 100%);
+            border-color: rgba(6,182,212,0.5);
+        }
+        
+        .dark .conversion-btn:hover {
+            @apply shadow-cyan-400/20;
+            background: linear-gradient(135deg, rgba(6,182,212,0.3) 0%, rgba(34,211,238,0.25) 100%);
+            border-color: rgba(6,182,212,0.6);
+        }
+        
+        .pdf-btn.disabled {
+            @apply text-slate-500 dark:text-slate-400 cursor-not-allowed;
+            background: linear-gradient(135deg, rgba(148,163,184,0.1) 0%, rgba(148,163,184,0.05) 100%);
+            border-color: rgba(148,163,184,0.3);
+        }
+        
+        .dark .pdf-btn.disabled {
+            background: linear-gradient(135deg, rgba(71,85,105,0.2) 0%, rgba(100,116,139,0.1) 100%);
+            border-color: rgba(71,85,105,0.4);
+        }
+        
+        /* Badge Premium */
+        .premium-badge {
+            @apply px-3 py-1 text-xs font-bold bg-gradient-to-r from-amber-400 to-orange-500 
+                   text-white rounded-full shadow-lg shadow-amber-500/30 ring-2 ring-white/20;
+            animation: gentle-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes gentle-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        
+        /* Dropdown Premium */
+        .premium-dropdown-item {
+            @apply flex flex-col items-center p-4 rounded-2xl text-sm font-semibold 
+                   transition-all duration-300 space-y-3 text-center relative overflow-hidden;
+            backdrop-filter: blur(15px);
+        }
+        
+        /* Mode Clair - Dropdown */
+        .premium-dropdown-item {
+            @apply text-slate-700;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.7) 100%);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        
+        /* Mode Sombre - Dropdown */
+        .dark .premium-dropdown-item {
+            @apply text-slate-200;
+            background: linear-gradient(135deg, rgba(30,41,59,0.85) 0%, rgba(51,65,85,0.7) 100%);
+            border: 1px solid rgba(71,85,105,0.5);
+        }
+        
+        .premium-dropdown-item:hover {
+            @apply transform scale-105 shadow-2xl;
+        }
+        
+        /* Mode Clair - Dropdown Hover */
+        .premium-dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.8) 100%);
+            border-color: rgba(255,255,255,0.6);
+        }
+        
+        /* Mode Sombre - Dropdown Hover */
+        .dark .premium-dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(51,65,85,0.8) 100%);
+            border-color: rgba(71,85,105,0.7);
+        }
+        
+        /* Toggle Thème Premium - Compact */
+        .premium-theme-toggle {
+            @apply relative focus:outline-none rounded-full transition-all duration-300 flex-shrink-0;
+        }
+        
+        .theme-toggle-track {
+            @apply relative w-12 h-6 bg-gradient-to-r from-slate-300 via-slate-200 to-slate-300 
+                   dark:from-slate-600 dark:via-slate-700 dark:to-slate-600 rounded-full transition-all duration-500
+                   shadow-inner border border-slate-300/50 dark:border-slate-500/50;
+        }
+        
+        .theme-toggle-thumb {
+            @apply absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-slate-900 rounded-full shadow-lg 
+                   transform transition-all duration-500 translate-x-0 dark:translate-x-6
+                   border border-slate-300/30 dark:border-slate-700/30 flex items-center justify-center;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+        }
+        
+        .dark .theme-toggle-thumb {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        
+        .theme-icon {
+            @apply text-xs transition-all duration-300;
+        }
+        
+        .sun-icon {
+            @apply text-amber-500;
+        }
+        
+        .moon-icon {
+            @apply text-blue-400;
+        }
+        
+        .premium-theme-toggle:hover .theme-toggle-thumb {
+            @apply scale-110 shadow-xl;
+        }
+        
+        /* Bouton Mobile Premium */
+        .premium-mobile-trigger {
+            @apply relative w-11 h-11 rounded-xl transition-all duration-300 overflow-hidden shadow-lg
+                   flex items-center justify-center;
+            backdrop-filter: blur(15px);
+        }
+        
+        /* Mode Clair - Mobile */
+        .premium-mobile-trigger {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.8) 100%);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        /* Mode Sombre - Mobile */
+        .dark .premium-mobile-trigger {
+            background: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(51,65,85,0.8) 100%);
+            border: 1px solid rgba(71,85,105,0.4);
+        }
+        
+        .premium-mobile-trigger:hover {
+            @apply transform scale-110 shadow-xl;
+        }
+        
+        /* Mode Clair - Mobile Hover */
+        .premium-mobile-trigger:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        /* Mode Sombre - Mobile Hover */
+        .dark .premium-mobile-trigger:hover {
+            background: linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(51,65,85,0.9) 100%);
+            border-color: rgba(71,85,105,0.6);
+        }
+        
+        /* Menu Mobile Moderne */
+        .mobile-menu-section {
+            @apply rounded-xl bg-slate-50/50 dark:bg-slate-800/50 overflow-hidden;
         }
         
         .mobile-menu-header {
-            @apply flex justify-between items-center px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300
-                  hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors;
+            @apply flex justify-between items-center p-4 text-slate-900 dark:text-white 
+                   hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-all duration-200
+                   font-medium;
         }
         
         .mobile-submenu {
-            @apply pl-2 pr-2 pb-1 bg-gray-50 dark:bg-gray-700 border-l-2 border-primary-500 dark:border-primary-400 ml-3;
+            @apply px-4 pb-2 space-y-1;
         }
         
         .mobile-submenu-item {
-            @apply block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200
-                   hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white 
-                   transition-all duration-200 my-1;
+            @apply flex items-center p-3 text-sm font-medium text-slate-700 dark:text-slate-300
+                   hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200
+                   hover:translate-x-1;
+        }
+        
+        .mobile-nav-item {
+            @apply flex items-center p-4 rounded-xl text-slate-900 dark:text-white
+                   hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200
+                   font-medium hover:scale-[1.02];
+        }
+        
+        /* Effet de lueur pour le logo */
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .floating-icon {
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+        
+        /* Animation gradient pour le texte */
+        .animated-gradient-text {
+            background: linear-gradient(45deg, #1e293b, #3b82f6, #8b5cf6, #1e293b);
+            background-size: 300% 300%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            animation: gradient-shift 3s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .modern-nav-item {
+                @apply px-3 py-2 text-xs;
+            }
+        }
+        
+        /* Smooth scrolling pour toute la page */
+        html {
+            scroll-behavior: smooth;
         }
     </style>
 </body>
 </html>
+

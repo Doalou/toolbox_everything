@@ -104,7 +104,7 @@
                             <option value="480p">480p</option>
                             <option value="360p">360p</option>
                         </select>
-                        <button onclick="downloadVideo('video')"
+                        <button onclick="downloadVideo('video', document.getElementById('videoQuality').value)"
                                 class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 
                                        text-white rounded-lg transition-all duration-300
                                        transform hover:scale-[1.02] active:scale-[0.98]
@@ -197,99 +197,87 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
     }
 });
 
-async function downloadVideo(format) {
+async function downloadVideo(format, quality = 'highest') {
     const url = document.getElementById('videoUrl').value;
-    const quality = document.getElementById('videoQuality').value;
+    if (!url) {
+        showNotification('Veuillez entrer une URL valide', 'error');
+        return;
+    }
+
+    abortController = new AbortController();
+    const signal = abortController.signal;
+    
+    // Afficher la barre de progression
+    const progressOverlay = document.getElementById('progressOverlay');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     
-    if (abortController) {
-        abortController.abort();
-    }
-    abortController = new AbortController();
+    progressOverlay.classList.remove('hidden');
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Démarrage du téléchargement...';
 
     try {
-        document.getElementById('progressOverlay').classList.remove('hidden');
-        progressBar.style.width = '0%';
-        progressText.textContent = 'Connexion au serveur YouTube...';
-
-        // Animation de progression simulée pendant la requête
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            if (progress < 90) {
-                progress += Math.random() * 10;
-                progressBar.style.width = `${Math.min(progress, 90)}%`;
-                
-                if (progress < 30) {
-                    progressText.textContent = 'Analyse de l\'URL...';
-                } else if (progress < 60) {
-                    progressText.textContent = 'Récupération des métadonnées...';
-                } else {
-                    progressText.textContent = 'Préparation du téléchargement...';
-                }
-            }
-        }, 200);
-
         const response = await fetch('/youtube/download', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 url: url,
                 format: format,
                 quality: quality
             }),
-            signal: abortController.signal
+            signal: signal
         });
 
-        clearInterval(progressInterval);
-        progressBar.style.width = '100%';
-        progressText.textContent = 'Téléchargement terminé !';
-
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Erreur lors du téléchargement');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erreur inconnue lors du téléchargement');
         }
+
+        progressText.textContent = 'Téléchargement du fichier...';
+        progressBar.style.width = '50%'; // Update progress
 
         const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
+        const downloadUrl = URL.createObjectURL(blob);
+        
         const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = `video.${format === 'audio' ? 'mp3' : 'mp4'}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(downloadUrl);
-        document.body.removeChild(a);
-
-        showNotification('Téléchargement terminé !', 'success');
-    } catch (error) {
-        // Nettoyer l'intervalle en cas d'erreur
-        if (typeof progressInterval !== 'undefined') {
-            clearInterval(progressInterval);
+        const disposition = response.headers.get('content-disposition');
+        let filename = 'download';
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches != null && matches[1]) {
+                filename = matches[1].replace(/['"]/g, '');
+            }
         }
         
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        progressText.textContent = 'Téléchargement terminé !';
+        progressBar.style.width = '100%';
+
+        // Masquer la progression après un délai
+        setTimeout(() => {
+            progressOverlay.classList.add('hidden');
+        }, 2000);
+
+        a.remove();
+        URL.revokeObjectURL(downloadUrl);
+
+    } catch (error) {
         if (error.name === 'AbortError') {
             showNotification('Téléchargement annulé', 'info');
         } else {
             showNotification(error.message, 'error');
         }
+        progressOverlay.classList.add('hidden');
     } finally {
-        document.getElementById('progressOverlay').classList.add('hidden');
         abortController = null;
     }
-}
-
-function formatDuration(seconds) {
-    if (!seconds) return '00:00';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
-}
-
-function formatNumber(num) {
-    return new Intl.NumberFormat().format(num);
 }
 
 function cancelDownload() {
@@ -298,66 +286,27 @@ function cancelDownload() {
     }
 }
 
-function showVideoLoading(show) {
-    const loadingElement = document.getElementById('videoLoading');
-    const previewElement = document.getElementById('videoPreview');
-    
-    if (show) {
-        loadingElement.classList.remove('hidden');
-        previewElement.classList.add('hidden');
-    } else {
-        loadingElement.classList.add('hidden');
+function showVideoLoading(isLoading) {
+    document.getElementById('videoLoading').classList.toggle('hidden', !isLoading);
+    if(isLoading) {
+        document.getElementById('videoPreview').classList.add('hidden');
     }
 }
 
-function showNotification(message, type = 'info') {
-    const notificationContainer = document.getElementById('notifications') || createNotificationContainer();
-    
-    const notification = document.createElement('div');
-    notification.className = `
-        transform transition-all duration-300 translate-x-full opacity-0
-        p-4 rounded-lg shadow-lg text-white z-50 mb-2 max-w-sm
-        ${type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'}
-    `;
-    
-    notification.innerHTML = `
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} mr-2"></i>
-                <span>${message}</span>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    
-    notificationContainer.appendChild(notification);
-    
-    // Animation d'entrée
-    requestAnimationFrame(() => {
-        notification.classList.remove('translate-x-full', 'opacity-0');
-    });
-    
-    // Suppression automatique après 5 secondes
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.classList.add('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 300);
-        }
-    }, 5000);
+// Fonctions utilitaires
+function formatDuration(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return [
+        h > 0 ? h : '',
+        m.toString().padStart(2, '0'),
+        s.toString().padStart(2, '0')
+    ].filter(Boolean).join(':');
 }
 
-function createNotificationContainer() {
-    const container = document.createElement('div');
-    container.id = 'notifications';
-    container.className = 'fixed top-4 right-4 z-50 space-y-2';
-    document.body.appendChild(container);
-    return container;
+function formatNumber(num) {
+    return new Intl.NumberFormat('fr-FR').format(num);
 }
 </script>
 {% endblock %}

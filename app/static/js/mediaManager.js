@@ -1,5 +1,4 @@
-import { createNotification, handleError } from './main.js';
-
+// Configuration
 const CONFIG = {
     MAX_FILE_SIZE: 500 * 1024 * 1024,
     SUPPORTED_FORMATS: {
@@ -46,9 +45,20 @@ class MediaManager {
     async handleFiles(files) {
         const validFiles = Array.from(files).filter(file => {
             if (file.size > CONFIG.MAX_FILE_SIZE) {
-                createNotification('Fichier trop volumineux (max 500MB)', 'error');
+                showNotification('Fichier trop volumineux (max 500MB)', 'error');
                 return false;
             }
+            
+            // Vérification du type MIME
+            const isValidType = Object.values(CONFIG.SUPPORTED_FORMATS)
+                .flat()
+                .includes(file.type);
+            
+            if (!isValidType) {
+                showNotification(`Type de fichier non supporté: ${file.type}`, 'error');
+                return false;
+            }
+            
             return true;
         });
 
@@ -56,7 +66,7 @@ class MediaManager {
             try {
                 this.showProgress(`Conversion de ${file.name}`);
                 await this.processFile(file);
-                createNotification('Conversion réussie !');
+                showNotification('Conversion réussie !');
             } catch (error) {
                 handleError(error);
             } finally {
@@ -68,15 +78,27 @@ class MediaManager {
     async processFile(file) {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('format', document.querySelector('[name="format"]').value);
-        formData.append('quality', document.querySelector('[name="quality"]').value);
+        
+        // Récupération des options depuis les éléments de la page
+        const formatElement = document.querySelector('[name="format"]');
+        const qualityElement = document.querySelector('[name="quality"]');
+        
+        if (formatElement) {
+            formData.append('format', formatElement.value);
+        }
+        if (qualityElement) {
+            formData.append('quality', qualityElement.value);
+        }
 
         const response = await fetch('/media/convert', {
             method: 'POST',
             body: formData
         });
 
-        if (!response.ok) throw new Error(await response.text());
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erreur de conversion: ${errorText}`);
+        }
 
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
@@ -88,24 +110,22 @@ class MediaManager {
     }
 
     showProgress(message) {
-        this.progressText.textContent = message;
-        this.progressOverlay.classList.remove('hidden');
+        if (this.progressText) {
+            this.progressText.textContent = message;
+        }
+        if (this.progressOverlay) {
+            this.progressOverlay.classList.remove('hidden');
+        }
     }
 
     hideProgress() {
-        this.progressOverlay.classList.add('hidden');
+        if (this.progressOverlay) {
+            this.progressOverlay.classList.add('hidden');
+        }
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => new MediaManager());
-
-function showNotification(message, type = 'info') {
-    const notifications = document.getElementById('notifications');
-    const notification = document.createElement('div');
-    notification.className = `p-4 rounded-lg shadow-lg ${
-        type === 'error' ? 'bg-red-500' : 'bg-green-500'
-    } text-white mb-2`;
-    notification.textContent = message;
-    notifications.appendChild(notification);
-    setTimeout(() => notification.remove(), 3000);
-}
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    new MediaManager();
+});

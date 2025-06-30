@@ -11,7 +11,7 @@ media_bp = Blueprint("media", __name__)
 
 @media_bp.route("/")
 def index():
-    return render_template('media.html')  # Mise à jour du nom du template
+    return render_template('media.html')
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -22,7 +22,7 @@ def is_video(filename):
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_VIDEO_EXTENSIONS']
 
 def process_image(img, output_format, quality=85):
-    """Fonction utilitaire pour traiter une image"""
+    """Traite une image"""
     output = io.BytesIO()
     
     try:
@@ -39,21 +39,20 @@ def process_image(img, output_format, quality=85):
         raise ValueError(f"Erreur lors du traitement de l'image: {str(e)}")
 
 def process_video(input_path, output_path, quality=85):
-    """Version simplifiée et robuste de la conversion vidéo"""
+    """Conversion vidéo avec FFmpeg"""
     try:
-        # Vérification de FFmpeg
         ffmpeg_path = current_app.config.get('FFMPEG_PATH')
         if not ffmpeg_path or not os.path.exists(ffmpeg_path):
-            raise ValueError("FFmpeg n'est pas disponible")
+            ffmpeg_path = '/usr/bin/ffmpeg'
+            if not os.path.exists(ffmpeg_path):
+                raise ValueError("FFmpeg n'est pas disponible")
 
-        # Préparation de la commande de base
         command = [
             ffmpeg_path,
             '-i', input_path,
-            '-y',  # Écraser le fichier existant
+            '-y',
         ]
 
-        # Ajout des options de codec selon le format
         output_format = os.path.splitext(output_path)[1][1:]
         if output_format == 'mp4':
             command.extend([
@@ -68,26 +67,35 @@ def process_video(input_path, output_path, quality=85):
                 '-c:v', 'libvpx-vp9',
                 '-crf', '30',
                 '-b:v', '0',
-                '-c:a', 'libopus'
+                '-c:a', 'libopus',
+                '-deadline', 'good',
+                '-cpu-used', '1'
             ])
 
-        # Ajout du fichier de sortie
         command.append(output_path)
 
-        # Exécution de la commande
         current_app.logger.info(f"Commande FFmpeg: {' '.join(command)}")
+        current_app.logger.info(f"Début conversion - timeout: 600 secondes")
+        
         result = subprocess.run(
             command,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            timeout=600
         )
 
         if not os.path.exists(output_path):
             raise ValueError("La conversion n'a pas généré de fichier de sortie")
 
+        output_size = os.path.getsize(output_path)
+        current_app.logger.info(f"Conversion terminée avec succès - taille: {output_size} bytes")
+        
         return output_path
 
+    except subprocess.TimeoutExpired:
+        current_app.logger.error("Timeout de conversion FFmpeg (10 minutes)")
+        raise ValueError("La conversion a pris trop de temps (limite: 10 minutes)")
     except subprocess.CalledProcessError as e:
         current_app.logger.error(f"Erreur FFmpeg: {e.stderr}")
         raise ValueError(f"Erreur lors de la conversion: {e.stderr}")
@@ -123,26 +131,21 @@ def convert_media():
         return jsonify({'error': 'Fichier invalide'}), 400
 
     try:
-        # Création du dossier temporaire
         temp_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp')
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Préparation des fichiers
         input_filename = secure_filename(file.filename)
         output_format = request.form.get('format', '').lower()
         quality = int(request.form.get('quality', 85))
 
-        # Génération des chemins
         input_path = os.path.join(temp_dir, f"input_{uuid.uuid4()}_{input_filename}")
         output_path = os.path.join(temp_dir, f"output_{uuid.uuid4()}.{output_format}")
 
-        # Sauvegarde du fichier d'entrée
         file.save(input_path)
         current_app.logger.info(f"Fichier reçu: {input_path}")
 
         try:
             if is_video(file.filename):
-                # Conversion vidéo
                 current_app.logger.info(f"Début conversion vidéo: {input_path} -> {output_path}")
                 result_path = process_video(input_path, output_path, quality)
                 response = send_file(
@@ -151,7 +154,6 @@ def convert_media():
                     download_name=f"converted_{os.path.splitext(input_filename)[0]}.{output_format}"
                 )
             else:
-                # Conversion image
                 img = Image.open(input_path)
                 output = process_image(img, output_format.upper(), quality)
                 response = send_file(
@@ -164,7 +166,6 @@ def convert_media():
             return response
 
         finally:
-            # Nettoyage
             for path in [input_path, output_path]:
                 if os.path.exists(path):
                     try:
@@ -178,13 +179,12 @@ def convert_media():
 
 @media_bp.route("/batch", methods=["POST"])
 def batch_process():
-    """Traite plusieurs images en une seule fois"""
+    """Traite plusieurs images en batch"""
     if "files[]" not in request.files:
         return jsonify({"error": "Aucun fichier transmis"}), 400
 
     files = request.files.getlist("files[]")
     
-    # Création d'un ZIP pour les résultats
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
         for file in files:

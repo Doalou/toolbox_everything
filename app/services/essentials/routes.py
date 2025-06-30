@@ -28,10 +28,9 @@ essentials_bp = Blueprint("essentials", __name__)
 
 @essentials_bp.route("/")
 def index():
-    """Page d'accueil des outils essentiels"""
     return render_template('essentials/index.html')
 
-# ========== QR CODE GENERATOR ==========
+# QR Code Generator
 @essentials_bp.route("/qr-generator")
 def qr_generator():
     return render_template('essentials/qr_generator.html')
@@ -40,7 +39,6 @@ def qr_generator():
 @require_rate_limit(max_requests=50, window_seconds=60)
 @validate_request_size(max_size_mb=1)
 def generate_qr_code():
-    """Génère un QR code"""
     try:
         data = request.get_json()
         if not data or 'text' not in data:
@@ -50,7 +48,6 @@ def generate_qr_code():
         if len(text) > 2000:
             raise ValidationError("Texte trop long (max: 2000 caractères)")
         
-        # Options optionnelles
         size = data.get('size', 10)
         border = data.get('border', 4)
         error_correction = data.get('error_correction', 'M')
@@ -69,7 +66,7 @@ def generate_qr_code():
         current_app.logger.error(f"Erreur QR code: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== PASSWORD GENERATOR ==========
+# Password Generator
 @essentials_bp.route("/password-generator")
 def password_generator():
     return render_template('essentials/password_generator.html')
@@ -77,7 +74,6 @@ def password_generator():
 @essentials_bp.route("/api/password", methods=["POST"])
 @require_rate_limit(max_requests=100, window_seconds=60)
 def generate_password():
-    """Génère un mot de passe sécurisé"""
     try:
         data = request.get_json() or {}
         
@@ -107,7 +103,7 @@ def generate_password():
         current_app.logger.error(f"Erreur génération mot de passe: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== TEXT PROCESSOR ==========
+# Text Processor
 @essentials_bp.route("/text-processor")
 def text_processor():
     return render_template('essentials/text_processor.html')
@@ -115,7 +111,6 @@ def text_processor():
 @essentials_bp.route("/api/text/process", methods=["POST"])
 @require_rate_limit(max_requests=50, window_seconds=60)
 def process_text():
-    """Traite du texte (comptage, formatage, etc.)"""
     try:
         data = request.get_json()
         if not data or 'text' not in data:
@@ -148,7 +143,7 @@ def process_text():
         current_app.logger.error(f"Erreur traitement texte: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== COLOR PALETTE GENERATOR ==========
+# Color Palette Generator
 @essentials_bp.route("/color-palette")
 def color_palette():
     return render_template('essentials/color_palette.html')
@@ -156,7 +151,6 @@ def color_palette():
 @essentials_bp.route("/api/colors/palette", methods=["POST"])
 @require_rate_limit(max_requests=30, window_seconds=60)
 def generate_color_palette():
-    """Génère une palette de couleurs"""
     try:
         data = request.get_json() or {}
         
@@ -179,7 +173,7 @@ def generate_color_palette():
         current_app.logger.error(f"Erreur palette couleurs: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== URL VALIDATOR ==========
+# URL Validator
 @essentials_bp.route("/url-validator")
 def url_validator():
     return render_template('essentials/url_validator.html')
@@ -187,7 +181,6 @@ def url_validator():
 @essentials_bp.route("/api/url/validate", methods=["POST"])
 @require_rate_limit(max_requests=20, window_seconds=60)
 def validate_url():
-    """Valide et analyse une URL de manière sécurisée"""
     try:
         data = request.get_json()
         if not data or 'url' not in data:
@@ -197,7 +190,6 @@ def validate_url():
         validator = URLValidator()
         result = validator.validate_and_analyze(url)
         
-        # Si la validation échoue pour des raisons de sécurité, lever une exception appropriée
         if not result.get('is_valid', False) and 'security_check' in result:
             security_check = result['security_check']
             if not security_check.get('passed', False):
@@ -215,12 +207,12 @@ def validate_url():
         })
         
     except URLSecurityError:
-        raise  # Re-lancer l'exception de sécurité telle quelle
+        raise
     except Exception as e:
         current_app.logger.error(f"Erreur validation URL: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== HASH CALCULATOR ==========
+# Hash Calculator
 @essentials_bp.route("/hash-calculator")
 def hash_calculator():
     return render_template('essentials/hash_calculator.html')
@@ -228,7 +220,6 @@ def hash_calculator():
 @essentials_bp.route("/api/hash", methods=["POST"])
 @require_rate_limit(max_requests=50, window_seconds=60)
 def calculate_hash():
-    """Calcule le hash d'un texte"""
     try:
         data = request.get_json()
         if not data or 'text' not in data:
@@ -249,7 +240,7 @@ def calculate_hash():
         current_app.logger.error(f"Erreur calcul hash: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== BASE64 ENCODER/DECODER ==========
+# Base64 Encoder/Decoder
 @essentials_bp.route("/base64")
 def base64_tool():
     return render_template('essentials/base64.html')
@@ -257,7 +248,6 @@ def base64_tool():
 @essentials_bp.route("/api/base64", methods=["POST"])
 @require_rate_limit(max_requests=50, window_seconds=60)
 def base64_encode_decode():
-    """Encode/Décode en Base64"""
     try:
         data = request.get_json()
         if not data or 'text' not in data:
@@ -284,7 +274,7 @@ def base64_encode_decode():
         current_app.logger.error(f"Erreur Base64: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== JSON FORMATTER ==========
+# JSON Formatter
 @essentials_bp.route("/json-formatter")
 def json_formatter():
     return render_template('essentials/json_formatter.html')
@@ -292,7 +282,6 @@ def json_formatter():
 @essentials_bp.route("/api/json/format", methods=["POST"])
 @require_rate_limit(max_requests=30, window_seconds=60)
 def format_json():
-    """Formate et valide du JSON"""
     try:
         data = request.get_json()
         if not data or 'json_text' not in data:
@@ -313,7 +302,7 @@ def format_json():
         current_app.logger.error(f"Erreur formatage JSON: {str(e)}")
         raise ToolboxBaseException(str(e))
 
-# ========== TIMESTAMP CONVERTER ==========
+# Timestamp Converter
 @essentials_bp.route("/timestamp")
 def timestamp_converter():
     return render_template('essentials/timestamp.html')
@@ -321,24 +310,20 @@ def timestamp_converter():
 @essentials_bp.route("/api/timestamp/convert", methods=["POST"])
 @require_rate_limit(max_requests=50, window_seconds=60)
 def convert_timestamp():
-    """Convertit les timestamps"""
     try:
         data = request.get_json()
         
         converter = TimestampConverter()
         
         if 'timestamp' in data:
-            # Conversion timestamp -> date
             timestamp = data['timestamp']
             timezone = data.get('timezone', 'UTC')
             result = converter.timestamp_to_date(timestamp, timezone)
         elif 'date' in data:
-            # Conversion date -> timestamp
             date_str = data['date']
             timezone = data.get('timezone', 'UTC')
             result = converter.date_to_timestamp(date_str, timezone)
         else:
-            # Timestamp actuel
             result = converter.current_timestamp()
         
         return jsonify({

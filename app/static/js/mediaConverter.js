@@ -53,6 +53,8 @@ class MediaConverter {
         for (const file of fileList) {
             if (this.isValidFile(file)) {
                 this.addFile(file);
+            } else {
+                showNotification(`Type de fichier non supporté: ${file.name}`, 'error');
             }
         }
         this.updateUI();
@@ -72,35 +74,71 @@ class MediaConverter {
 
     addFileCard(id, file) {
         const template = document.getElementById('fileCardTemplate');
+        if (!template) {
+            console.warn('Template fileCardTemplate non trouvé');
+            return;
+        }
+        
         const card = template.content.cloneNode(true);
         
         const preview = card.querySelector('.preview');
-        if (file.type.startsWith('image/')) {
-            preview.src = URL.createObjectURL(file);
-        } else {
-            preview.src = '/static/img/video-placeholder.png';  // À créer
+        if (preview) {
+            if (file.type.startsWith('image/')) {
+                preview.src = URL.createObjectURL(file);
+            } else {
+                preview.src = '/static/img/video-placeholder.png';
+            }
         }
 
-        card.querySelector('.filename').textContent = file.name;
-        card.querySelector('.remove-file').addEventListener('click', () => {
-            this.removeFile(id);
-        });
+        const filenameEl = card.querySelector('.filename');
+        if (filenameEl) {
+            filenameEl.textContent = file.name;
+        }
+        
+        const removeBtn = card.querySelector('.remove-file');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                this.removeFile(id);
+            });
+        }
 
-        this.fileGrid.appendChild(card);
+        if (this.fileGrid) {
+            this.fileGrid.appendChild(card);
+        }
     }
 
     removeFile(id) {
         this.files.delete(id);
         this.updateUI();
+        // Reconstruction de la grille pour supprimer l'élément
+        this.rebuildFileGrid();
+    }
+
+    rebuildFileGrid() {
+        if (this.fileGrid) {
+            this.fileGrid.innerHTML = '';
+            for (const [id, file] of this.files.entries()) {
+                this.addFileCard(id, file);
+            }
+        }
     }
 
     updateUI() {
         const hasFiles = this.files.size > 0;
-        this.fileList.classList.toggle('hidden', !hasFiles);
-        this.conversionOptions.classList.toggle('hidden', !hasFiles);
+        if (this.fileList) {
+            this.fileList.classList.toggle('hidden', !hasFiles);
+        }
+        if (this.conversionOptions) {
+            this.conversionOptions.classList.toggle('hidden', !hasFiles);
+        }
     }
 
     async convertFiles() {
+        if (this.files.size === 0) {
+            showNotification('Aucun fichier à convertir', 'error');
+            return;
+        }
+
         try {
             this.convertBtn.disabled = true;
             this.convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conversion...';
@@ -138,9 +176,9 @@ class MediaConverter {
                 URL.revokeObjectURL(downloadUrl);
             }
 
-            createNotification('Conversion terminée !', 'success');
+            showNotification('Conversion terminée !', 'success');
         } catch (error) {
-            createNotification(error.message, 'error');
+            showNotification(error.message, 'error');
         } finally {
             this.convertBtn.disabled = false;
             this.convertBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Convertir';
@@ -149,4 +187,6 @@ class MediaConverter {
 }
 
 // Initialisation
-document.addEventListener('DOMContentLoaded', () => new MediaConverter());
+document.addEventListener('DOMContentLoaded', () => {
+    new MediaConverter();
+});

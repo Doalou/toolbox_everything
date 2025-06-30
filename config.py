@@ -16,13 +16,13 @@ class Config:
     YOUTUBE_DOWNLOAD_FOLDER: str = os.path.join(BASE_DIR, "downloads")
     YOUTUBE_MAX_DURATION: int = 3600
     LOG_FILE: str = os.path.join(BASE_DIR, "logs", "toolbox.log")
-    CLEANUP_INTERVAL: int = 1800  # 30 minutes
+    CLEANUP_INTERVAL: int = 1800
     MAX_BATCH_SIZE: int = 20
     DEFAULT_QUALITY: int = 85
-    CHUNK_SIZE: int = 8192  # Taille optimale pour la lecture/écriture de fichiers
+    CHUNK_SIZE: int = 8192
     FFMPEG_PATH: str = os.path.join(BASE_DIR, "bin", "ffmpeg.exe")
     
-    # Configuration sécurité URL Validator
+    # URL Validator sécurité
     URL_VALIDATOR_ALLOWED_DOMAINS: Set[str] = frozenset({
         'google.com', 'www.google.com',
         'github.com', 'www.github.com',
@@ -31,7 +31,7 @@ class Config:
         'python.org', 'www.python.org',
         'mozilla.org', 'www.mozilla.org',
         'cloudflare.com', 'www.cloudflare.com',
-        'example.com', 'www.example.com'  # Pour les tests
+        'example.com', 'www.example.com'
     })
     
     URL_VALIDATOR_ALLOWED_DOMAIN_SUFFIXES: Set[str] = frozenset({
@@ -43,17 +43,19 @@ class Config:
     @classmethod
     def get_ffmpeg_path(cls) -> Optional[str]:
         """Retourne le chemin vers FFmpeg"""
+        ffmpeg_which = shutil.which('ffmpeg')
+        if ffmpeg_which:
+            return ffmpeg_which
+            
         paths_to_check = [
-            os.path.join(cls.BASE_DIR, "bin", "ffmpeg.exe"),
-            os.path.join('C:', 'ffmpeg', 'bin', 'ffmpeg.exe'),
-            'ffmpeg'
+            '/usr/bin/ffmpeg',
         ]
         
         for path in paths_to_check:
             if os.path.isfile(path):
                 return path
                 
-        return shutil.which('ffmpeg')  # Chercher dans le PATH
+        return None
 
     @classmethod
     def validate_ffmpeg(cls) -> bool:
@@ -79,19 +81,20 @@ class Config:
             cls.TEMP_FOLDER,
             cls.YOUTUBE_DOWNLOAD_FOLDER,
             os.path.dirname(cls.LOG_FILE),
-            os.path.join(cls.BASE_DIR, "bin")  # Dossier pour les binaires
+            os.path.join(cls.BASE_DIR, "bin")
         ]
         
         for directory in required_dirs:
             if not os.path.exists(directory):
                 os.makedirs(directory)
                 
-        # Vérification de FFmpeg
-        ffmpeg_path = cls.get_ffmpeg_path()
-        if not ffmpeg_path:
-            print("WARNING: FFmpeg non trouvé dans le système. Veuillez installer FFmpeg.")
-            print("Téléchargement: https://www.ffmpeg.org/download.html")
-            print("Une fois installé, assurez-vous que ffmpeg est dans le PATH")
+        # Vérification FFmpeg (désactivée en Docker)
+        if not os.environ.get('DOCKER_ENV'):
+            ffmpeg_path = cls.get_ffmpeg_path()
+            if not ffmpeg_path:
+                print("WARNING: FFmpeg non trouvé dans le système. Veuillez installer FFmpeg.")
+                print("Téléchargement: https://www.ffmpeg.org/download.html")
+                print("Une fois installé, assurez-vous que ffmpeg est dans le PATH")
 
     @classmethod
     def get_mime_types(cls) -> Dict[str, str]:
@@ -111,13 +114,12 @@ class Config:
 
     @classmethod
     def init_app(cls, app: Any) -> None:
-        """Configuration optimisée de l'application"""
+        """Configuration de l'application"""
         cls.validate()
         app.config.from_object(cls)
         app.config['MAX_CONTENT_LENGTH'] = cls.MAX_CONTENT_LENGTH
         app.config['UPLOAD_FOLDER'] = cls.UPLOAD_FOLDER
         
-        # Création des dossiers nécessaires en une seule passe
         os.makedirs(cls.UPLOAD_FOLDER, exist_ok=True)
         os.makedirs(cls.TEMP_FOLDER, exist_ok=True)
         os.makedirs(os.path.dirname(cls.LOG_FILE), exist_ok=True)

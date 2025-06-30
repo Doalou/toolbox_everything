@@ -15,8 +15,8 @@ __pycache__/
 .Python
 
 # Fichiers Git et contrôle de version
-.git
-.github
+.git/
+.github/
 .gitignore
 .gitattributes
 
@@ -61,11 +61,10 @@ docker-build.sh
 docker-build.ps1
 docker-compose.override.yml
 
-# Documentation et fichiers projet (garder README.md pour Docker Hub)
+# Documentation et fichiers projet
 docs/
 *.md
 !README.md
-LICENSE
 
 # Fichiers de configuration locale
 .env
@@ -89,36 +88,7 @@ yarn-error.log*
 .nyc_output
 coverage/
 
-# Fichiers Docker
+# Fichiers Docker (exclus du build)
 Dockerfile
 docker-compose.yml
-.dockerignore
-
-# Fichiers de développement
-.DS_Store
-.git
-.github
-.gitignore
-
-# Fichiers de développement
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Fichiers générés lors de l'exécution
-*.log
-logs/
-uploads/
-downloads/
-
-# Fichiers README et documentations
-README.md
-LICENSE
-docs/
-
-# Fichiers de cache
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/ 
+.dockerignore 
