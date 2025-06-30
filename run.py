@@ -129,9 +129,6 @@ def main():
     # Validation des arguments
     validate_args(args)
 
-    # Utilisation de l'application déjà créée
-    global app
-
     # Configuration de la compression
     compress = Compress()
     compress.init_app(app)
