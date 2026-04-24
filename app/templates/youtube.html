@@ -1,164 +1,129 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
-    <!-- En-tête -->
-    <div class="text-center mb-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-            YouTube Downloader
+<div class="max-w-3xl mx-auto px-4 py-10">
+    <div class="tool-hero">
+        <h1 class="tool-hero__title">
+            YouTube <span style="color: #dc2626;">Downloader</span>
         </h1>
-        <p class="text-gray-600 dark:text-gray-400 text-lg">
-            Téléchargez vos vidéos YouTube en haute qualité
+        <p class="tool-hero__subtitle">
+            Téléchargez vos vidéos YouTube en MP4 ou MP3, en haute qualité.
         </p>
     </div>
 
-    <!-- Formulaire d'URL -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
-        <form id="urlForm" class="space-y-4">
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fab fa-youtube text-red-500 text-xl"></i>
+    <div class="tool-panel mb-5">
+        <form id="urlForm">
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <i class="fab fa-youtube absolute left-3 top-1/2 -translate-y-1/2 text-red-500"></i>
+                    <input type="url" id="videoUrl" required
+                           class="tool-input" style="padding-left: 2.4rem;"
+                           placeholder="Collez l'URL de la vidéo YouTube ici">
                 </div>
-                <input type="url" id="videoUrl" required
-                       class="block w-full pl-10 pr-24 py-3 rounded-lg 
-                              border-gray-300 dark:border-gray-600 
-                              dark:bg-gray-700 dark:text-white
-                              focus:border-red-500 focus:ring-red-500"
-                       placeholder="Collez l'URL de la vidéo YouTube ici">
-                <button type="submit" 
-                        class="absolute right-2 top-2 px-4 py-1
-                               bg-red-600 hover:bg-red-700 text-white 
-                               rounded-lg transition-colors">
-                    <i class="fas fa-search mr-2"></i>Vérifier
+                <button type="submit" class="tool-btn tool-btn--red">
+                    <i class="fas fa-search text-xs"></i>
+                    <span>Vérifier</span>
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Indicateur de chargement -->
-    <div id="videoLoading" class="hidden transform transition-all duration-300">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-            <div class="flex flex-col items-center space-y-4">
-                <div class="relative">
-                    <div class="w-16 h-16 border-4 border-red-200 dark:border-red-900 border-t-red-600 dark:border-t-red-400 rounded-full animate-spin"></div>
-                    <i class="fab fa-youtube absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500 text-xl"></i>
+    <div id="videoLoading" class="hidden">
+        <div class="tool-panel flex flex-col items-center py-10 gap-4">
+            <div class="relative">
+                <div class="w-12 h-12 border-[3px] border-red-100 dark:border-red-900/40 border-t-red-500 rounded-full animate-spin"></div>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-semibold text-gray-900 dark:text-white">Recherche en cours…</p>
+                <p class="tool-meta justify-center mt-1">Récupération des informations de la vidéo</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="videoPreview" class="hidden">
+        <div class="tool-panel mb-5">
+            <div class="flex flex-col md:flex-row gap-5">
+                <div class="w-full md:w-56 flex-shrink-0">
+                    <div class="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <img id="thumbnail" class="w-full h-full object-cover" alt="Miniature">
+                    </div>
                 </div>
-                <div class="text-center">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                        Recherche en cours...
-                    </h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm">
-                        Récupération des informations de la vidéo YouTube
+                <div class="flex-1 flex flex-col justify-center gap-2">
+                    <h2 id="videoTitle" class="text-base font-bold text-gray-900 dark:text-white leading-snug"></h2>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                        <p id="channelName" class="tool-meta">
+                            <i class="fas fa-user-circle"></i>
+                            <span></span>
+                        </p>
+                        <p id="videoDuration" class="tool-meta">
+                            <i class="fas fa-clock"></i>
+                            <span></span>
+                        </p>
+                        <p id="videoViews" class="tool-meta">
+                            <i class="fas fa-eye"></i>
+                            <span></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="tool-panel">
+                <h3 class="tool-panel__heading">
+                    <i class="fas fa-video text-red-500"></i>
+                    Télécharger en vidéo
+                </h3>
+                <div class="space-y-3">
+                    <select id="videoQuality" class="tool-select text-center">
+                        <option value="highest">Meilleure qualité</option>
+                        <option value="1080p">1080p</option>
+                        <option value="720p">720p</option>
+                        <option value="480p">480p</option>
+                        <option value="360p">360p</option>
+                    </select>
+                    <button onclick="downloadVideo('video', document.getElementById('videoQuality').value)"
+                            class="tool-btn tool-btn--red tool-btn--full">
+                        <i class="fas fa-download text-xs"></i>
+                        <span>Télécharger MP4</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tool-panel">
+                <h3 class="tool-panel__heading">
+                    <i class="fas fa-music text-emerald-500"></i>
+                    Télécharger en audio
+                </h3>
+                <div class="space-y-3">
+                    <p class="tool-meta">
+                        <i class="fas fa-info-circle"></i>
+                        Format MP3 — Qualité 192 kbps
                     </p>
+                    <button onclick="downloadVideo('audio')"
+                            class="tool-btn tool-btn--green tool-btn--full">
+                        <i class="fas fa-download text-xs"></i>
+                        <span>Télécharger MP3</span>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Prévisualisation de la vidéo -->
-    <div id="videoPreview" class="hidden transform transition-all duration-300">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-            <!-- Informations vidéo -->
-            <div class="p-6">
-                <div class="flex flex-col md:flex-row gap-6">
-                    <div class="w-full md:w-64 flex-shrink-0">
-                        <div class="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                            <img id="thumbnail" class="w-full h-full object-cover" alt="Miniature">
-                        </div>
-                    </div>
-                    <div class="flex-1 space-y-4 text-center">
-                        <h2 id="videoTitle" class="text-xl font-semibold text-gray-900 dark:text-white"></h2>
-                        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                            <p id="channelName" class="flex items-center justify-center">
-                                <i class="fas fa-user-circle mr-2"></i>
-                                <span></span>
-                            </p>
-                            <p id="videoDuration" class="flex items-center justify-center">
-                                <i class="fas fa-clock mr-2"></i>
-                                <span></span>
-                            </p>
-                            <p id="videoViews" class="flex items-center justify-center">
-                                <i class="fas fa-eye mr-2"></i>
-                                <span></span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Options de téléchargement -->
-            <div class="border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-6">
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Format vidéo -->
-                    <div class="space-y-4">
-                        <h3 class="font-medium text-gray-900 dark:text-white flex items-center">
-                            <i class="fas fa-video text-red-500 mr-2"></i>
-                            Télécharger en Vidéo
-                        </h3>
-                        <select id="videoQuality" 
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 
-                                       dark:bg-gray-700 dark:text-white justify-center text-center" >
-                            <option value="highest">Meilleure qualité</option>
-                            <option value="1080p">1080p</option>
-                            <option value="720p">720p</option>
-                            <option value="480p">480p</option>
-                            <option value="360p">360p</option>
-                        </select>
-                        <button onclick="downloadVideo('video', document.getElementById('videoQuality').value)"
-                                class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 
-                                       text-white rounded-lg transition-all duration-300
-                                       transform hover:scale-[1.02] active:scale-[0.98]
-                                       flex items-center justify-center space-x-2">
-                            <i class="fas fa-download"></i>
-                            <span>Télécharger MP4</span>
-                        </button>
-                    </div>
-
-                    <!-- Format audio -->
-                    <div class="space-y-4">
-                        <h3 class="font-medium text-gray-900 dark:text-white flex items-center">
-                            <i class="fas fa-music text-green-500 mr-2"></i>
-                            Télécharger en Audio
-                        </h3>
-                        <div class="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Format MP3 - Qualité 192kbps
-                        </div>
-                        <button onclick="downloadVideo('audio')"
-                                class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 
-                                       text-white rounded-lg transition-all duration-300
-                                       transform hover:scale-[1.02] active:scale-[0.98]
-                                       flex items-center justify-center space-x-2">
-                            <i class="fas fa-download"></i>
-                            <span>Télécharger MP3</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Indicateur de progression -->
-    <div id="progressOverlay" class="hidden mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        <div class="space-y-4">
-            <div class="flex items-center justify-between">
-                <h3 class="font-medium text-gray-900 dark:text-white">Progression</h3>
+    <div id="progressOverlay" class="hidden mt-5">
+        <div class="tool-panel">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">Progression</span>
                 <button id="cancelButton" onclick="cancelDownload()"
-                        class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm 
-                               rounded-lg transition-colors flex items-center space-x-1">
-                    <i class="fas fa-times"></i>
+                        class="tool-btn tool-btn--sm tool-btn--ghost">
+                    <i class="fas fa-times text-[10px]"></i>
                     <span>Annuler</span>
                 </button>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 overflow-hidden">
-                <div id="progressBar" 
-                     class="bg-primary-600 h-full rounded-full transition-all duration-300"
-                     style="width: 0%">
-                </div>
+            <div class="tool-progress">
+                <div id="progressBar" class="tool-progress__bar tool-progress__bar--red" style="width: 0%"></div>
             </div>
-            <p id="progressText" class="text-sm text-gray-600 dark:text-gray-400">
-                Préparation du téléchargement...
-            </p>
+            <p id="progressText" class="tool-meta mt-2">Préparation du téléchargement…</p>
         </div>
     </div>
 </div>
@@ -172,7 +137,6 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
     const url = document.getElementById('videoUrl').value;
     if (!url) return;
 
-    // Afficher l'indicateur de chargement
     showVideoLoading(true);
     
     try {
@@ -181,14 +145,12 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
         
         if (!response.ok) throw new Error(data.error || 'Erreur lors de la récupération des informations');
 
-        // Afficher les informations
         document.getElementById('thumbnail').src = data.thumbnail;
         document.getElementById('videoTitle').textContent = data.title;
-        document.getElementById('channelName').textContent = `Chaîne: ${data.channel}`;
-        document.getElementById('videoDuration').textContent = `Durée: ${formatDuration(data.duration)}`;
-        document.getElementById('videoViews').textContent = `Vues: ${formatNumber(data.views)}`;
+        document.getElementById('channelName').querySelector('span').textContent = `Chaîne: ${data.channel}`;
+        document.getElementById('videoDuration').querySelector('span').textContent = `Durée: ${formatDuration(data.duration)}`;
+        document.getElementById('videoViews').querySelector('span').textContent = `Vues: ${formatNumber(data.views)}`;
         
-        // Masquer le chargement et afficher la prévisualisation
         showVideoLoading(false);
         document.getElementById('videoPreview').classList.remove('hidden');
     } catch (error) {
@@ -207,27 +169,20 @@ async function downloadVideo(format, quality = 'highest') {
     abortController = new AbortController();
     const signal = abortController.signal;
     
-    // Afficher la barre de progression
     const progressOverlay = document.getElementById('progressOverlay');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     
     progressOverlay.classList.remove('hidden');
     progressBar.style.width = '0%';
-    progressText.textContent = 'Démarrage du téléchargement...';
+    progressText.textContent = 'Démarrage du téléchargement…';
 
     try {
         const response = await fetch('/youtube/download', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                url: url,
-                format: format,
-                quality: quality
-            }),
-            signal: signal
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, format, quality }),
+            signal
         });
 
         if (!response.ok) {
@@ -235,8 +190,8 @@ async function downloadVideo(format, quality = 'highest') {
             throw new Error(errorData.error || 'Erreur inconnue lors du téléchargement');
         }
 
-        progressText.textContent = 'Téléchargement du fichier...';
-        progressBar.style.width = '50%'; // Update progress
+        progressText.textContent = 'Téléchargement du fichier…';
+        progressBar.style.width = '50%';
 
         const blob = await response.blob();
         const downloadUrl = URL.createObjectURL(blob);
@@ -260,10 +215,7 @@ async function downloadVideo(format, quality = 'highest') {
         progressText.textContent = 'Téléchargement terminé !';
         progressBar.style.width = '100%';
 
-        // Masquer la progression après un délai
-        setTimeout(() => {
-            progressOverlay.classList.add('hidden');
-        }, 2000);
+        setTimeout(() => { progressOverlay.classList.add('hidden'); }, 2000);
 
         a.remove();
         URL.revokeObjectURL(downloadUrl);
@@ -281,28 +233,20 @@ async function downloadVideo(format, quality = 'highest') {
 }
 
 function cancelDownload() {
-    if (abortController) {
-        abortController.abort();
-    }
+    if (abortController) abortController.abort();
 }
 
 function showVideoLoading(isLoading) {
     document.getElementById('videoLoading').classList.toggle('hidden', !isLoading);
-    if(isLoading) {
-        document.getElementById('videoPreview').classList.add('hidden');
-    }
+    if (isLoading) document.getElementById('videoPreview').classList.add('hidden');
 }
 
-// Fonctions utilitaires
 function formatDuration(seconds) {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    return [
-        h > 0 ? h : '',
-        m.toString().padStart(2, '0'),
-        s.toString().padStart(2, '0')
-    ].filter(Boolean).join(':');
+    return [h > 0 ? h : '', m.toString().padStart(2, '0'), s.toString().padStart(2, '0')]
+        .filter(Boolean).join(':');
 }
 
 function formatNumber(num) {

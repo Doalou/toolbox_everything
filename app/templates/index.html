@@ -3,114 +3,87 @@
 {% block content %}
 <div class="text-center py-10">
     <div class="relative mb-16">
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Bienvenue sur <span class="text-primary-600 dark:text-primary-400">Toolbox Everything</span>
+        <img src="{{ url_for('static', filename='img/logo.svg') }}"
+             alt="Logo Toolbox Everything"
+             class="home-hero__logo"
+             width="160" height="160"
+             loading="eager" decoding="async">
+        <h1 class="home-hero__title">
+            Moins d'onglets,<br>
+            <span class="home-hero__title-accent">plus d'outils.</span>
         </h1>
-        <p class="text-lg text-gray-600 dark:text-gray-400">
-            Vos outils essentiels, réunis en un seul endroit
+        <p class="home-hero__subtitle">
+            Tout ce dont vous avez besoin au quotidien, regroupé dans une seule interface.
+            Pas de compte, pas d'attente.
         </p>
-        
-        <!-- Effet de particules/bulles en arrière-plan -->
-        <div aria-hidden="true" class="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 dark:opacity-20">
-            <div class="blur-[106px] h-56 bg-gradient-to-br from-primary-600 to-purple-400 dark:from-blue-700"></div>
-            <div class="blur-[106px] h-32 bg-gradient-to-r from-cyan-400 to-sky-300 dark:to-indigo-600"></div>
-        </div>
     </div>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8 px-4 max-w-7xl mx-auto relative z-10">
-        <!-- YouTube Card -->
-        <div class="group hover:shadow-xl hover:shadow-primary-100/50 dark:hover:shadow-primary-900/50 
-                    transition-all duration-300 rounded-xl overflow-hidden bg-white dark:bg-gray-800 
-                    border border-gray-200 dark:border-gray-700">
-            <div class="p-8">
-                <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6 mx-auto
-                           group-hover:scale-110 transition-transform duration-300">
-                    <i class="fab fa-youtube text-3xl text-red-600 dark:text-red-500"></i>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 max-w-7xl mx-auto relative z-10">
+        <div class="home-card group">
+            <div class="p-7">
+                <div class="home-card__icon home-card__icon--red mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fab fa-youtube text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">YouTube Downloader</h2>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">
-                    Téléchargez facilement vos vidéos YouTube préférées en MP4 ou MP3
+                <h2 class="home-card__title mb-3">YouTube Downloader</h2>
+                <p class="home-card__text mb-5">
+                    Téléchargez vos vidéos YouTube en MP4 ou MP3, en haute qualité.
                 </p>
-                <div class="text-center">
-                    <a href="{{ url_for('youtube.index') }}" 
-                       class="inline-flex items-center px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 
-                              text-white transition-all duration-300 hover:scale-105">
-                        Commencer
-                        <i class="fas fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                    </a>
-                </div>
+                <a href="{{ url_for('youtube.index') }}"
+                   class="home-card__cta home-card__cta--red">
+                    Commencer
+                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+                </a>
             </div>
         </div>
 
-        <!-- Images Card -->
-        <div class="group hover:shadow-xl hover:shadow-primary-100/50 dark:hover:shadow-primary-900/50 
-                    transition-all duration-300 rounded-xl overflow-hidden bg-white dark:bg-gray-800 
-                    border border-gray-200 dark:border-gray-700">
-            <div class="p-8">
-                <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-6 mx-auto
-                           group-hover:scale-110 transition-transform duration-300">
-                    <i class="far fa-images text-3xl text-primary-600 dark:text-primary-400"></i>
+        <div class="home-card group">
+            <div class="p-7">
+                <div class="home-card__icon home-card__icon--blue mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
+                    <i class="far fa-images text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Convertisseur Média</h2>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">
-                    Convertissez vos images et vidéos en quelques clics
+                <h2 class="home-card__title mb-3">Convertisseur Média</h2>
+                <p class="home-card__text mb-5">
+                    Convertissez vos images et vidéos en quelques clics, sans perte.
                 </p>
-                <div class="text-center">
-                    <a href="{{ url_for('media.index') }}" 
-                       class="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 hover:bg-primary-700 
-                              text-white transition-all duration-300 hover:scale-105">
-                        Commencer
-                        <i class="fas fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                    </a>
-                </div>
+                <a href="{{ url_for('media.index') }}"
+                   class="home-card__cta home-card__cta--blue">
+                    Commencer
+                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+                </a>
             </div>
         </div>
 
-        <!-- Essentials Card -->
-        <div class="group hover:shadow-xl hover:shadow-primary-100/50 dark:hover:shadow-primary-900/50 
-                    transition-all duration-300 rounded-xl overflow-hidden bg-white dark:bg-gray-800 
-                    border border-gray-200 dark:border-gray-700">
-            <div class="p-8">
-                <div class="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-6 mx-auto
-                           group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-tools text-3xl text-amber-600 dark:text-amber-400"></i>
+        <div class="home-card group">
+            <div class="p-7">
+                <div class="home-card__icon home-card__icon--amber mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fas fa-tools text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Outils Essentiels</h2>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">
-                    Accédez à une collection d'outils pratiques pour vos besoins quotidiens
+                <h2 class="home-card__title mb-3">Outils Essentiels</h2>
+                <p class="home-card__text mb-5">
+                    QR codes, mots de passe, hash, base64 et bien plus encore.
                 </p>
-                <div class="text-center">
-                    <a href="/essentials" 
-                       class="inline-flex items-center px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-700 
-                              text-white transition-all duration-300 hover:scale-105">
-                        Accéder
-                        <i class="fas fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                    </a>
-                </div>
+                <a href="/essentials"
+                   class="home-card__cta home-card__cta--amber">
+                    Accéder
+                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+                </a>
             </div>
         </div>
 
-        <!-- PDF System Card -->
-        <div class="group hover:shadow-xl hover:shadow-primary-100/50 dark:hover:shadow-primary-900/50 
-                    transition-all duration-300 rounded-xl overflow-hidden bg-white dark:bg-gray-800 
-                    border border-gray-200 dark:border-gray-700">
-            <div class="p-8">
-                <div class="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center mb-6 mx-auto
-                           group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-file-pdf text-3xl text-rose-600 dark:text-rose-400"></i>
+        <div class="home-card group">
+            <div class="p-7">
+                <div class="home-card__icon home-card__icon--violet mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fas fa-file-pdf text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Système PDF</h2>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">
-                    Gérez, modifiez et convertissez vos documents PDF facilement
+                <h2 class="home-card__title mb-3">Outils PDF</h2>
+                <p class="home-card__text mb-5">
+                    150+ opérations PDF via Stirling PDF : fusionner, découper, compresser, OCR…
                 </p>
-                <div class="text-center">
-                    <button disabled
-                       class="inline-flex items-center px-6 py-3 rounded-lg bg-gray-400 dark:bg-gray-600 
-                              text-white cursor-not-allowed opacity-75">
-                        Bientôt disponible
-                        <i class="fas fa-clock ml-2"></i>
-                    </button>
-                </div>
+                <a href="{{ url_for('pdf.index') }}"
+                   class="home-card__cta home-card__cta--violet">
+                    {{ 'Ouvrir' if stirling_enabled else 'Configurer' }}
+                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+                </a>
             </div>
         </div>
     </div>

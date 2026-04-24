@@ -7,6 +7,7 @@ PYTHON := python3
 PIP := pip3
 FLASK_APP := run.py
 PORT := 8000
+APP_VERSION := $(shell grep -s '^APP_VERSION=' .env | cut -d= -f2 || echo "1.3.0")
 
 # Couleurs pour l'affichage
 GREEN := \033[0;32m
@@ -39,6 +40,14 @@ help:
 setup: install
 	@echo "$(GREEN)✓ Configuration de l'environnement...$(NC)"
 	@mkdir -p logs uploads downloads
+	@if [ ! -f .env ]; then \
+		cp env.example .env; \
+		SECRET=$$(python3 -c "import secrets; print(secrets.token_hex(32))"); \
+		sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$$SECRET/" .env; \
+		echo "$(GREEN)✓ Fichier .env créé avec une SECRET_KEY sécurisée$(NC)"; \
+	else \
+		echo "$(YELLOW)ℹ Fichier .env déjà existant — SECRET_KEY inchangée$(NC)"; \
+	fi
 	@echo "$(GREEN)✓ Installation terminée !$(NC)"
 
 # Installation des dépendances
@@ -82,6 +91,11 @@ test:
 		echo "$(RED)Aucun dossier de tests trouvé$(NC)"; \
 	fi
 
+# Tests avec couverture
+test-cov:
+	@echo "$(YELLOW)Exécution des tests avec couverture...$(NC)"
+	$(PYTHON) -m pytest tests/ -v --cov=app --cov-report=term-missing
+
 # Vérification du code
 lint:
 	@echo "$(YELLOW)Vérification du code avec flake8...$(NC)"
@@ -119,15 +133,15 @@ check: lint security
 
 # Construction Docker
 docker-build:
-	@echo "$(YELLOW)Construction de l'image Docker...$(NC)"
-	docker build -t toolbox-everything:latest .
-	@echo "$(GREEN)✓ Image Docker construite$(NC)"
+	@echo "$(YELLOW)Construction de l'image Docker (v$(APP_VERSION))...$(NC)"
+	docker build --build-arg APP_VERSION=$(APP_VERSION) -t toolbox-everything:$(APP_VERSION) -t toolbox-everything:latest .
+	@echo "$(GREEN)✓ Image Docker construite (v$(APP_VERSION))$(NC)"
 
 # Lancement Docker
 docker-run:
 	@echo "$(YELLOW)Lancement du conteneur Docker...$(NC)"
 	@echo "$(GREEN)Serveur accessible sur http://localhost:$(PORT)$(NC)"
-	docker run -p $(PORT):8000 --rm -it toolbox-everything:latest
+	docker run -p $(PORT):8000 -e APP_VERSION=$(APP_VERSION) --rm -it toolbox-everything:latest
 
 # Vérification des dépendances
 deps-check:

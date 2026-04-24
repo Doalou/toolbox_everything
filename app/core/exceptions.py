@@ -129,36 +129,17 @@ class ConfigurationError(ToolboxBaseException):
 
 
 def register_error_handlers(app):
-    """Enregistre les gestionnaires d'erreurs globaux"""
+    """Enregistre les handlers pour les exceptions métier.
+
+    Les HTTPException standard (404, 500...) sont gérées dans
+    `app/services/main.py` qui rend les templates HTML correspondants.
+    Ici on se concentre sur nos exceptions custom (API JSON).
+    """
 
     @app.errorhandler(ToolboxBaseException)
-    def handle_toolbox_exception(error):
-        logger.error(f"ToolboxException: {error.message}", extra=error.details)
+    def handle_toolbox_exception(error: ToolboxBaseException):
+        if error.status_code >= 500:
+            logger.error("ToolboxException: %s", error.message, extra=error.details)
+        else:
+            logger.warning("ToolboxException: %s", error.message, extra=error.details)
         return jsonify(error.to_dict()), error.status_code
-
-    @app.errorhandler(ValidationError)
-    def handle_validation_error(error):
-        logger.warning(f"Validation error: {error.message}", extra=error.details)
-        return jsonify(error.to_dict()), error.status_code
-
-    @app.errorhandler(SecurityError)
-    def handle_security_error(error):
-        logger.error(f"Security error: {error.message}", extra=error.details)
-        return jsonify(error.to_dict()), error.status_code
-
-    @app.errorhandler(404)
-    def handle_not_found(error):
-        return (
-            jsonify({"error": "Ressource non trouvée", "error_code": "NOT_FOUND"}),
-            404,
-        )
-
-    @app.errorhandler(500)
-    def handle_internal_error(error):
-        logger.error(f"Internal server error: {str(error)}")
-        return (
-            jsonify(
-                {"error": "Erreur interne du serveur", "error_code": "INTERNAL_ERROR"}
-            ),
-            500,
-        )

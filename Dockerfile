@@ -1,9 +1,7 @@
 # Multi-stage build pour optimiser la taille
-FROM python:3.12-slim AS builder
+ARG APP_VERSION=1.3.0
 
-LABEL maintainer="toolbox-everything"
-LABEL version="1.2"
-LABEL description="Toolbox Everything - Une boîte à outils web complète"
+FROM python:3.12-slim AS builder
 
 # Installation des dépendances de build
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -25,11 +23,14 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Image finale
 FROM python:3.12-slim
 
+ARG APP_VERSION=1.3.0
+
 LABEL maintainer="toolbox-everything"
-LABEL version="1.2"
-LABEL description="Toolbox Everything - Une boîte à outils web complète"
+LABEL version="${APP_VERSION}"
+LABEL description="Toolbox Everything - Une boite a outils web complete"
 LABEL org.opencontainers.image.source="https://github.com/doalou/toolbox_everything"
 LABEL org.opencontainers.image.documentation="https://github.com/doalou/toolbox_everything/README.md"
+LABEL org.opencontainers.image.version="${APP_VERSION}"
 
 # Installation des dépendances runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -48,8 +49,13 @@ WORKDIR /app
 
 COPY . .
 
+# .env depuis env.example si absent, avec génération automatique de SECRET_KEY
+RUN if [ ! -f .env ]; then cp env.example .env; fi && \
+    SECRET=$(python -c "import secrets; print(secrets.token_hex(32))") && \
+    sed -i "s/^SECRET_KEY=.*/SECRET_KEY=${SECRET}/" .env
+
 # Création des répertoires nécessaires
-RUN mkdir -p uploads/temp uploads/temp_youtube downloads logs bin
+RUN mkdir -p uploads/temp uploads/temp_youtube downloads logs
 
 # Variables d'environnement
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -57,6 +63,7 @@ ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=run.py
 ENV FLASK_ENV=production
 ENV DOCKER_ENV=1
+ENV APP_VERSION=${APP_VERSION}
 
 EXPOSE 8000
 

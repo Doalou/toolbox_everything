@@ -1,172 +1,80 @@
 #!/usr/bin/env python3
 """
-Toolbox Everything - Point d'entrée principal
-==============================================
+Toolbox Everything — point d'entrée.
 
-Script de lancement de l'application Flask avec support des arguments
-de ligne de commande pour différents modes d'exécution.
-
-Usage:
-    python run.py [--dev] [--port PORT] [--host HOST]
+- Sous gunicorn : c'est `app` (module-level) qui est importé ; la bannière et
+  Compress sont déjà gérés par `create_app()`.
+- En direct (`python run.py [--dev]`) : on demande la bannière via la variable
+  d'env TOOLBOX_PRINT_BANNER et on lance le serveur de dev Flask.
 """
 
+from __future__ import annotations
+
 import argparse
-import logging
 import os
 import sys
-from logging.handlers import RotatingFileHandler
 
-from flask_compress import Compress
-
-from app.services.main import create_app
-
-# Création de l'application au niveau module pour Gunicorn
-app = create_app()
+from app import __version__
 
 
-def setup_logging(app, debug_mode=False):
-    """Configure le système de logging"""
-    # Créer le dossier logs s'il n'existe pas
-    logs_dir = os.path.join(os.path.dirname(__file__), "logs")
-    os.makedirs(logs_dir, exist_ok=True)
-
-    # Configuration du niveau de log
-    log_level = logging.DEBUG if debug_mode else logging.INFO
-
-    # Handler pour fichier avec rotation
-    log_file = os.path.join(logs_dir, "toolbox.log")
-    file_handler = RotatingFileHandler(
-        log_file, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"  # 10MB
-    )
-    file_handler.setFormatter(
-        logging.Formatter(
-            "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
-        )
-    )
-    file_handler.setLevel(log_level)
-
-    # Handler pour console (uniquement en mode debug)
-    if debug_mode:
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(
-            logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-        )
-        console_handler.setLevel(logging.DEBUG)
-        app.logger.addHandler(console_handler)
-
-    # Ajouter les handlers
-    app.logger.addHandler(file_handler)
-    app.logger.setLevel(log_level)
-
-    # Log de démarrage
-    app.logger.info("=== Toolbox Everything démarré ===")
-    app.logger.info(f"Mode debug: {debug_mode}")
-    app.logger.info(f"Niveau de log: {log_level}")
-
-
-def create_argument_parser():
-    """Crée le parser d'arguments de ligne de commande"""
+def _create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Toolbox Everything - Collection d'outils pratiques",
+        description="Toolbox Everything — collection d'outils pratiques",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Exemples d'utilisation:
-  python run.py                     # Mode production sur port 8000
-  python run.py --dev               # Mode développement avec debug
-  python run.py --port 5000         # Mode production sur port 5000
-  python run.py --dev --port 3000   # Mode développement sur port 3000
-        """,
+        epilog=(
+            "Exemples :\n"
+            "  python run.py                     # production locale (Werkzeug)\n"
+            "  python run.py --dev               # mode dev + reloader\n"
+            "  python run.py --port 5000         # port custom\n"
+        ),
     )
-
-    parser.add_argument(
-        "--dev",
-        action="store_true",
-        help="Lance en mode développement (debug activé, rechargement auto)",
-    )
-
-    parser.add_argument(
-        "--port", type=int, default=8000, help="Port d'écoute du serveur (défaut: 8000)"
-    )
-
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0",
-        help="Adresse d'écoute du serveur (défaut: 0.0.0.0)",
-    )
-
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=1,
-        help="Nombre de workers (uniquement en mode production avec gunicorn)",
-    )
-
-    parser.add_argument(
-        "--version", action="version", version="Toolbox Everything v1.2.0"
-    )
-
+    parser.add_argument("--dev", action="store_true", help="Mode développement (debug + reloader)")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
+    parser.add_argument("--host", type=str, default=os.environ.get("HOST", "0.0.0.0"))
+    parser.add_argument("--no-banner", action="store_true", help="Ne pas imprimer la bannière")
+    parser.add_argument("--version", action="version", version=f"Toolbox Everything v{__version__}")
     return parser
 
 
-def validate_args(args):
-    """Valide les arguments fournis"""
-    if args.port < 1 or args.port > 65535:
-        print(f"Erreur: Le port doit être entre 1 et 65535 (fourni: {args.port})")
-        sys.exit(1)
+def _build_app(print_banner: bool):
+    # Active la bannière AVANT l'import de create_app pour qu'elle soit imprimée
+    # une seule fois lors de la première création.
+    if print_banner:
+        os.environ["TOOLBOX_PRINT_BANNER"] = "1"
 
-    if args.workers < 1:
-        print(f"Erreur: Le nombre de workers doit être >= 1 (fourni: {args.workers})")
-        sys.exit(1)
+    from app.services.main import create_app
+
+    return create_app()
 
 
-def main():
-    """Point d'entrée principal"""
-    # Parse des arguments
-    parser = create_argument_parser()
-    args = parser.parse_args()
+# Objet exposé à Gunicorn (« run:app »). Pas de bannière ici : gunicorn crée
+# plusieurs workers, on veut l'afficher une seule fois via un hook externe ou
+# en laissant Docker/prod utiliser ses propres logs.
+app = _build_app(print_banner=False)
 
-    # Validation des arguments
-    validate_args(args)
 
-    # Configuration de la compression
-    compress = Compress()
-    compress.init_app(app)
+def main() -> None:
+    args = _create_parser().parse_args()
 
-    # Configuration du logging
-    setup_logging(app, debug_mode=args.dev)
+    if not 1 <= args.port <= 65535:
+        print(f"Erreur: port invalide ({args.port})", file=sys.stderr)
+        sys.exit(2)
 
-    # Affichage des informations de démarrage
-    mode = "développement" if args.dev else "production"
-    print(f"🚀 Démarrage de Toolbox Everything en mode {mode}")
-    print(f"📍 Serveur: http://{args.host}:{args.port}")
+    # Pour le mode direct on re-crée l'app afin d'avoir la bannière et le flag debug.
+    runtime_app = _build_app(print_banner=not args.no_banner)
 
-    if args.dev:
-        print("🔧 Mode développement activé:")
-        print("   - Debug activé")
-        print("   - Rechargement automatique")
-        print("   - Logs détaillés")
-
-    # Lancement du serveur
     try:
-        if args.dev:
-            # Mode développement avec le serveur Flask intégré
-            app.run(
-                host=args.host,
-                port=args.port,
-                debug=True,
-                use_reloader=True,
-                threaded=True,
-            )
-        else:
-            # Mode production
-            print(f"⚡ {args.workers} worker(s) configuré(s)")
-            app.run(host=args.host, port=args.port, debug=False, threaded=True)
-
+        runtime_app.run(
+            host=args.host,
+            port=args.port,
+            debug=args.dev,
+            use_reloader=args.dev,
+            threaded=True,
+        )
     except KeyboardInterrupt:
-        print("\n🛑 Arrêt demandé par l'utilisateur")
-    except Exception as e:
-        print(f"❌ Erreur lors du démarrage: {e}")
+        print("\nArrêt demandé par l'utilisateur.")
+    except Exception as exc:  # noqa: BLE001
+        print(f"Erreur au démarrage: {exc}", file=sys.stderr)
         sys.exit(1)
 
 

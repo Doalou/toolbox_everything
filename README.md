@@ -1,188 +1,142 @@
-# 🧰 Toolbox Everything
+# Toolbox Everything
 
-Une boîte à outils web complète avec téléchargeur YouTube, convertisseur de médias et outils utilitaires, le tout dans une interface moderne et responsive.
+Boîte à outils web modulaire — téléchargement YouTube, conversion média, outils utilitaires (QR, hash, JSON, passwords…) et **150+ opérations PDF** via Stirling PDF embarqué.
 
-## ✨ Fonctionnalités
+Interface responsive Flask + Tailwind, le tout conteneurisé et prêt pour la prod.
 
-- **🎬 Téléchargeur YouTube** - Téléchargez des vidéos et audio depuis YouTube en différentes qualités
-- **🔄 Convertisseur de médias** - Convertissez entre différents formats d'images et vidéos  
-- **🔧 Outils essentiels** - Générateur de QR codes, raccourcisseur d'URL, et plus
-- **📱 Interface responsive** - Fonctionne parfaitement sur desktop et mobile
-- **🐳 Docker ready** - Conteneurisé et prêt pour Docker Hub
-
-## 🚀 Installation et lancement
-
-### Option 1: Docker (Recommandé)
-
-#### Depuis Docker Hub
-```bash
-docker run -d -p 8000:8000 --name toolbox doalo/toolbox-everything
-```
-
-#### Build local
-```bash
-# Clone du projet
-git clone https://github.com/doalou/toolbox_everything.git
-cd toolbox_everything
-
-# Build et lancement avec Docker Compose
-docker-compose up -d
-```
-
-### Option 2: Installation Python
-
-```bash
-# Clone et installation
-git clone https://github.com/doalou/toolbox_everything.git
-cd toolbox_everything
-
-# Installation des dépendances  
-pip install -r requirements.txt
-
-# Lancement
-python run.py
-```
-
-Accédez ensuite à http://localhost:8000
-
-## 🐳 Docker Hub
-
-Ce projet est optimisé pour Docker Hub avec une organisation complète dans le dossier `docker/`.
-
-### Publication rapide sur Docker Hub
-
-**Windows :**
-```powershell
-cd docker
-.\docker-build.ps1 "1.0.0" "votre-username"
-```
-
-**Linux/Mac :**
-```bash
-cd docker
-chmod +x docker-build.sh
-./docker-build.sh "1.0.0" "votre-username"
-```
-
-**Avec Make :**
-```bash
-cd docker
-make push USERNAME=votre-username VERSION=1.0.0
-```
-
-📖 **Guide complet** : Consultez `docker/DOCKER_HUB_GUIDE.md` pour un guide détaillé.
-
-## 📂 Structure du projet
-
-```
-toolbox_everything/
-├── 📁 app/                    # Code source de l'application
-│   ├── core/                  # Modules principaux (sécurité, exceptions)
-│   ├── services/              # Services métier
-│   │   ├── main.py           # Factory de l'application Flask
-│   │   ├── youtube_downloader/ # Service téléchargement YouTube
-│   │   ├── media_converter/   # Service conversion de médias
-│   │   ├── essentials/        # Outils utilitaires
-│   │   └── common/            # Utilitaires partagés
-│   ├── static/               # Fichiers statiques (CSS, JS)
-│   └── templates/            # Templates HTML
-├── 📁 docker/                # 🐳 Outils Docker Hub
-│   ├── docker-build.sh      # Script build Linux/Mac
-│   ├── docker-build.ps1     # Script build Windows
-│   ├── docker-compose.hub.yml # Compose pour Docker Hub
-│   ├── Makefile             # Commandes automatisées
-│   ├── README.md            # Documentation du dossier
-│   ├── README.docker-hub.md # Doc pour page Docker Hub
-│   └── DOCKER_HUB_GUIDE.md  # Guide complet Docker Hub
-├── 🐳 Dockerfile            # Image Docker principale
-├── 🐙 docker-compose.yml    # Compose de développement  
-├── 📋 requirements.txt      # Dépendances Python
-├── 🏃 run.py               # Point d'entrée de l'application
-├── ⚙️  config.py            # Configuration
-└── 📖 README.md            # Ce fichier
-```
-
-## 🔧 Configuration
-
-### Variables d'environnement
-
-| Variable | Description | Défaut |
-|----------|-------------|--------|
-| `FLASK_ENV` | Environnement Flask | `production` |
-| `FLASK_APP` | Point d'entrée | `run.py` |
-| `MAX_CONTENT_LENGTH` | Taille max des uploads | `512MB` |
-| `YOUTUBE_MAX_DURATION` | Durée max vidéo YouTube | `3600s` |
-
-### Dossiers de données
-
-- `uploads/` - Fichiers uploadés temporaires
-- `downloads/` - Fichiers téléchargés (YouTube, etc.)  
-- `logs/` - Fichiers de logs de l'application
-
-## 🛠️ Développement
-
-### Prérequis
-
-- Python 3.11+
-- Docker (optionnel)
-- FFmpeg (pour la conversion de médias)
-
-### Installation locale
-
-```bash
-# Clone du repo
-git clone https://github.com/doalou/toolbox_everything.git
-cd toolbox_everything
-
-# Environnement virtuel
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate     # Windows
-
-# Installation des dépendances
-pip install -r requirements.txt
-
-# Lancement en mode développement
-python run.py
-```
-
-### Tests Docker
-
-```bash
-# Build et test local
-docker-compose up --build
-
-# Ou avec les outils Docker Hub
-cd docker
-make test USERNAME=votre-username
-```
-
-## 📱 API Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `/` | Interface principale |
-| `/youtube` | Téléchargeur YouTube |
-| `/media` | Convertisseur de médias |
-| `/essentials` | Outils utilitaires |
-
-## 🤝 Contribution
-
-1. Fork du projet
-2. Créez votre branche (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. Commit vos changements (`git commit -m 'Ajout nouvelle fonctionnalité'`)
-4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
-5. Ouvrez une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence [MIT](LICENSE).
-
-## 🆘 Support
-
-- **Issues** : [GitHub Issues](https://github.com/doalou/toolbox_everything/issues)
+**Version actuelle : 1.3.0**
 
 ---
 
-**⭐ Si ce projet vous est utile, n'hésitez pas à lui donner une étoile !**
+## Fonctionnalités
+
+| Module | Description |
+|--------|-------------|
+| **YouTube Downloader** | Vidéo / audio via `yt-dlp` 2026.x, téléchargement parallèle des fragments, formats `bestvideo+bestaudio` mergés par FFmpeg |
+| **Convertisseur Média** | Images (PNG, JPG, WebP, GIF…) et vidéos (MP4, WebM, MKV…) avec contrôle de qualité (CRF FFmpeg) |
+| **Outils Essentiels** | QR codes, mots de passe, hashes, Base64, JSON formatter, palettes couleurs, timestamps, raccourcisseur d'URL |
+| **Outils PDF** | 150+ opérations PDF (fusion, split, OCR, compression, conversion, signature, watermark…) via Stirling PDF embarqué — **mode amnésique** : `/configs`, `/logs` et `/tmp` en tmpfs (RAM), aucune analytics, nettoyage temp agressif (1h / 5min) |
+| **Healthcheck** | Endpoint `/health` avec statut de `yt-dlp`, `ffmpeg`, `stirling-pdf` |
+
+---
+
+## Démarrage rapide
+
+### Docker Compose (recommandé — inclut Stirling PDF)
+
+Un **seul** `docker-compose.yml` couvre les deux modes, via la variable `TOOLBOX_IMAGE`.
+
+**Mode build local (dev / CI)** :
+```bash
+git clone https://github.com/doalou/toolbox_everything.git
+cd toolbox_everything
+cp env.example .env          # puis édite SECRET_KEY
+docker compose up -d --build
+```
+
+**Mode image Docker Hub (prod)** :
+```bash
+export TOOLBOX_IMAGE=doalo/toolbox-everything:1.3.0
+docker compose pull
+docker compose up -d
+```
+
+- Toolbox : http://localhost:8000
+- Stirling PDF (embarqué via iframe) : http://localhost:8080
+
+### Installation locale (sans Docker)
+
+```bash
+git clone https://github.com/doalou/toolbox_everything.git
+cd toolbox_everything
+python -m venv venv
+source venv/bin/activate         # Linux/Mac
+# venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+python run.py --dev
+```
+
+Les outils PDF nécessitent Stirling PDF en parallèle (voir Configuration).
+
+---
+
+## Configuration
+
+Copier `env.example` vers `.env` puis adapter :
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `SECRET_KEY` | Clé Flask — **à définir** en prod | auto-générée si absente |
+| `APP_VERSION` | Version affichée dans le footer / healthcheck | `1.3.0` |
+| `FLASK_ENV` | `development` ou `production` | `production` |
+| `MAX_CONTENT_LENGTH` | Taille max des uploads (bytes) | `536870912` (512 MB) |
+| `YOUTUBE_MAX_DURATION` | Durée max vidéo YouTube (secondes) | `3600` |
+| `FFMPEG_PATH` | Chemin explicite vers FFmpeg | auto-détecté (`PATH`, `shutil.which`) |
+| `STIRLING_PDF_URL` | URL **interne** de Stirling PDF (server-side healthcheck) | `http://stirling-pdf:8080` |
+| `STIRLING_PDF_PUBLIC_URL` | URL **publique** utilisée par l'iframe (navigateur) | `http://localhost:8080` |
+| `TOOLBOX_IMAGE` | Image Docker à utiliser (laisser vide = build local) | `toolbox-everything:1.3.0` |
+| `TOOLBOX_PORT` / `STIRLING_PORT` | Ports hôte exposés | `8000` / `8080` |
+
+---
+
+## Structure du projet
+
+```
+toolbox_everything/
+├── app/
+│   ├── core/                     # Sécurité, exceptions métier
+│   ├── services/
+│   │   ├── main.py               # Factory Flask (logging, compress, healthcheck, errors)
+│   │   ├── youtube_downloader/   # yt-dlp
+│   │   ├── media_converter/      # FFmpeg / Pillow
+│   │   ├── essentials/           # QR, password, hash, JSON, etc.
+│   │   ├── pdf_tools/            # Iframe Stirling PDF + /pdf/status
+│   │   └── common/               # Utilitaires partagés
+│   ├── static/                   # CSS Tailwind + JS
+│   └── templates/                # Jinja2
+├── tests/                        # pytest (smoke + unit)
+├── config.py                     # Configuration centralisée
+├── run.py                        # CLI + cible Gunicorn (`run:app`)
+├── Dockerfile                    # Image Toolbox (Python 3.11-slim)
+├── docker-compose.yml            # Unifié (build local OU image hub via TOOLBOX_IMAGE)
+├── requirements.txt              # Runtime
+├── requirements-dev.txt          # Dev (pytest, black, flake8)
+├── Makefile                      # setup, dev, test, test-cov, lint, docker-*
+└── CHANGELOG.md
+```
+
+---
+
+## Développement
+
+```bash
+make setup        # .env + SECRET_KEY + dépendances
+make dev          # lance python run.py --dev sur :8000
+make test         # pytest
+make test-cov     # pytest + couverture
+make lint         # flake8
+make format       # black
+make docker-build # construit l'image avec APP_VERSION
+```
+
+Bannière ASCII au démarrage, logs rotatifs dans `logs/toolbox.log` (5 MB × 5).
+
+---
+
+## Endpoints principaux
+
+| Route | Description |
+|-------|-------------|
+| `GET /` | Accueil / dashboard |
+| `GET /youtube/` | Téléchargeur YouTube |
+| `GET /media/` | Convertisseur média |
+| `GET /essentials/` | Outils essentiels |
+| `GET /pdf/` | Outils PDF (iframe Stirling) |
+| `GET /pdf/status` | Statut JSON de Stirling PDF |
+| `GET /health` | Healthcheck JSON (version, yt-dlp, ffmpeg, stirling) |
+
+---
+
+## Licence
+
+[MIT](LICENSE).

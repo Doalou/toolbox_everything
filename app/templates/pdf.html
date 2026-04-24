@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if stirling_configured %}
+    <div class="pdf-frame-wrap">
+        <div class="pdf-frame-toolbar">
+            <div class="pdf-frame-toolbar__left">
+                <span class="pdf-frame-toolbar__dot" id="pdfStatusDot" aria-hidden="true"></span>
+                <h1 class="pdf-frame-toolbar__title">Instance Stirling PDF</h1>
+            </div>
+            <div class="pdf-frame-toolbar__right">
+                <a href="{{ stirling_public_url }}" target="_blank" rel="noopener noreferrer"
+                   class="tool-btn tool-btn--ghost tool-btn--sm" aria-label="Ouvrir dans un nouvel onglet">
+                    <i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+        </div>
+        <iframe id="pdfFrame"
+                class="pdf-frame"
+                src="{{ stirling_public_url }}"
+                title="Stirling PDF"
+                loading="lazy"
+                referrerpolicy="no-referrer"></iframe>
+    </div>
+
+    <script>
+        (function () {
+            const dot = document.getElementById('pdfStatusDot');
+            fetch('/pdf/status', { headers: { 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(data => {
+                    dot.classList.add(data.reachable ? 'pdf-frame-toolbar__dot--ok' : 'pdf-frame-toolbar__dot--warn');
+                })
+                .catch(() => dot.classList.add('pdf-frame-toolbar__dot--warn'));
+        })();
+    </script>
+{% else %}
+    <div class="max-w-2xl mx-auto px-4 py-12">
+        <div class="tool-hero">
+            <h1 class="tool-hero__title">PDF</h1>
+            <p class="tool-hero__subtitle">
+                Cette page embarque Stirling PDF. Le service n'est pas encore démarré.
+            </p>
+        </div>
+
+        <div class="tool-panel">
+            <div class="pdf-setup-block">
+                <pre class="pdf-setup-code"><code>docker compose up -d</code></pre>
+            </div>
+
+            <a href="https://github.com/Stirling-Tools/Stirling-PDF"
+               target="_blank" rel="noopener noreferrer"
+               class="tool-btn tool-btn--ghost tool-btn--sm">
+                <i class="fab fa-github"></i>
+                <span>Stirling PDF</span>
+            </a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block tools_features %}
+{% include 'tool_features.html' %}
+{% endblock %}

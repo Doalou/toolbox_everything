@@ -1,23 +1,51 @@
+# =====================================================
+# Toolbox Everything — docker-compose.yml (unifié)
+#
+# Deux modes, un seul fichier :
+#
+#   1) BUILD LOCAL (dev, CI) :
+#        docker compose up -d --build
+#
+#   2) IMAGE DOCKER HUB (prod) :
+#        export TOOLBOX_IMAGE=doalo/toolbox-everything:1.3.0
+#        docker compose pull
+#        docker compose up -d
+#
+# Si TOOLBOX_IMAGE n'est pas défini, le tag local
+# `toolbox-everything:${APP_VERSION}` est utilisé et la
+# section build prend le relais.
+# =====================================================
+
 services:
   toolbox:
+    image: ${TOOLBOX_IMAGE:-toolbox-everything:${APP_VERSION:-1.3.0}}
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-1.3.0}
     container_name: toolbox-everything
     ports:
-      - "8000:8000"
+      - "${TOOLBOX_PORT:-8000}:8000"
     volumes:
       - toolbox_uploads:/app/uploads
       - toolbox_downloads:/app/downloads
       - toolbox_logs:/app/logs
     environment:
       - FLASK_APP=run.py
-      - FLASK_ENV=production
-      - WERKZEUG_RUN_MAIN=true
+      - FLASK_ENV=${FLASK_ENV:-production}
       - PYTHONUNBUFFERED=1
+      - APP_VERSION=${APP_VERSION:-1.3.0}
+      # URL interne (réseau Docker) utilisée par le healthcheck /health
+      - STIRLING_PDF_URL=${STIRLING_PDF_URL:-http://stirling-pdf:8080}
+      # URL publique utilisée par l'iframe côté navigateur
+      - STIRLING_PDF_PUBLIC_URL=${STIRLING_PDF_PUBLIC_URL:-http://localhost:8080}
+    depends_on:
+      stirling-pdf:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -33,14 +61,86 @@ services:
           cpus: '0.25'
           memory: 256M
 
+  # ---------------------------------------------------------------
+  # Stirling PDF — configuré en mode AMNÉSIQUE (instance publique).
+  #
+  # - Aucune donnée utilisateur persistée : /configs et /logs sont
+  #   en tmpfs (RAM) et effacés à chaque restart du container.
+  # - Aucune analytics/télémétrie (PostHog, Scarf, Google).
+  # - Fichiers temporaires nettoyés agressivement (1h max, cycle 5min).
+  # - Pas d'audit log, pas d'URL-to-PDF (risque SSRF), pas de storage
+  #   utilisateur.
+  # - Seul le volume `stirling_tessdata` est persistant (modèles OCR
+  #   de Tesseract, données statiques — pas des documents utilisateur).
+  # ---------------------------------------------------------------
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:latest
+    container_name: toolbox-stirling-pdf
+    ports:
+      - "${STIRLING_PORT:-8080}:8080"
+    environment:
+      # --- Sécurité / authentification ---
+      - DOCKER_ENABLE_SECURITY=false
+      - SECURITY_ENABLELOGIN=false
+      # X-Frame-Options auto-DISABLED quand login off, OK pour iframe
+      - STORAGE_ENABLED=false
+
+      # --- UI / locale ---
+      - SYSTEM_DEFAULTLOCALE=fr-FR
+      - LANGS=fr_FR,en_GB
+      - UI_APPNAME=Toolbox PDF
+      - UI_HOMEDESCRIPTION=Instance publique — aucune donnée conservée.
+
+      # --- Confidentialité : zéro télémétrie ---
+      - SYSTEM_ENABLEANALYTICS=false
+      - SYSTEM_ENABLEPOSTHOG=false
+      - SYSTEM_ENABLESCARF=false
+      - SYSTEM_GOOGLEVISIBILITY=false
+      - SYSTEM_SHOWUPDATE=false
+      - SHOW_SURVEY=false
+      - METRICS_ENABLED=false
+
+      # --- Nettoyage agressif des fichiers temporaires ---
+      - SYSTEM_TEMPFILEMANAGEMENT_MAXAGEHOURS=1
+      - SYSTEM_TEMPFILEMANAGEMENT_CLEANUPINTERVALMINUTES=5
+      - SYSTEM_TEMPFILEMANAGEMENT_STARTUPCLEANUP=true
+      - SYSTEM_TEMPFILEMANAGEMENT_CLEANUPSYSTEMTEMP=true
+
+      # --- Désactivation des features à risque pour instance publique ---
+      - SYSTEM_ENABLEURLTOPDF=false
+      - SYSTEM_ENABLEMOBILESCANNER=false
+      - PREMIUM_PROFEATURES_AUDIT_ENABLED=false
+      - PREMIUM_ENTERPRISEFEATURES_AUDIT_ENABLED=false
+    volumes:
+      # Seul volume persistant : données statiques OCR Tesseract
+      - stirling_tessdata:/usr/share/tessdata
+    tmpfs:
+      # /configs et /logs en RAM — effacés à chaque restart
+      - /configs:size=64M,mode=1777
+      - /logs:size=64M,mode=1777
+      # /tmp également en RAM pour que les fichiers uploadés ne
+      # touchent jamais le disque hôte
+      - /tmp:size=512M,mode=1777
+    read_only: false
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - toolbox_network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
 networks:
   toolbox_network:
     driver: bridge
 
 volumes:
   toolbox_uploads:
-    driver: local
   toolbox_downloads:
-    driver: local
   toolbox_logs:
-    driver: local 
+  # Données OCR statiques Tesseract — pas de données utilisateur
+  stirling_tessdata:

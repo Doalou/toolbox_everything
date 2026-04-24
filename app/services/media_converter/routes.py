@@ -51,53 +51,51 @@ def process_image(img, output_format, quality=85):
         raise ValueError(f"Erreur lors du traitement de l'image: {str(e)}")
 
 
-def process_video(input_path, output_path, quality=85):
-    """Conversion vidéo avec FFmpeg"""
-    try:
-        ffmpeg_path = current_app.config.get("FFMPEG_PATH")
-        if not ffmpeg_path or not os.path.exists(ffmpeg_path):
-            ffmpeg_path = "/usr/bin/ffmpeg"
-            if not os.path.exists(ffmpeg_path):
-                raise ValueError("FFmpeg n'est pas disponible")
+def _quality_to_crf(quality: int, codec: str = "libx264") -> int:
+    """Map quality (0-100, plus haut = meilleure qualité) vers un CRF FFmpeg.
 
-        command = [
-            ffmpeg_path,
-            "-i",
-            input_path,
-            "-y",
-        ]
+    - libx264 : CRF ∈ [15, 32] (par défaut 23)
+    - libvpx-vp9 : CRF ∈ [20, 40] (par défaut 30)
+    """
+    quality = max(0, min(100, quality))
+    if codec == "libvpx-vp9":
+        return 40 - int((quality / 100) * 20)
+    return 32 - int((quality / 100) * 17)
+
+
+def process_video(input_path, output_path, quality=85):
+    """Conversion vidéo avec FFmpeg. `quality` ∈ [0, 100]."""
+    try:
+        from config import Config as _Config
+
+        ffmpeg_path = current_app.config.get("FFMPEG_PATH") or _Config.get_ffmpeg_path()
+        if not ffmpeg_path or not os.path.exists(ffmpeg_path):
+            raise ValueError("FFmpeg n'est pas disponible")
+
+        command = [ffmpeg_path, "-i", input_path, "-y"]
 
         output_format = os.path.splitext(output_path)[1][1:]
         if output_format == "mp4":
+            crf = _quality_to_crf(quality, "libx264")
             command.extend(
                 [
-                    "-c:v",
-                    "libx264",
-                    "-preset",
-                    "medium",
-                    "-crf",
-                    "23",
-                    "-c:a",
-                    "aac",
-                    "-b:a",
-                    "128k",
+                    "-c:v", "libx264",
+                    "-preset", "medium",
+                    "-crf", str(crf),
+                    "-c:a", "aac",
+                    "-b:a", "128k",
                 ]
             )
         elif output_format == "webm":
+            crf = _quality_to_crf(quality, "libvpx-vp9")
             command.extend(
                 [
-                    "-c:v",
-                    "libvpx-vp9",
-                    "-crf",
-                    "30",
-                    "-b:v",
-                    "0",
-                    "-c:a",
-                    "libopus",
-                    "-deadline",
-                    "good",
-                    "-cpu-used",
-                    "1",
+                    "-c:v", "libvpx-vp9",
+                    "-crf", str(crf),
+                    "-b:v", "0",
+                    "-c:a", "libopus",
+                    "-deadline", "good",
+                    "-cpu-used", "1",
                 ]
             )
 

@@ -169,3 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Toolbox Everything — fichiers utilisateurs
+uploads/
+downloads/
+logs/
