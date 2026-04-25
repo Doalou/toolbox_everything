@@ -1,0 +1,30 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label" for="re-pattern">Motif</label>
+    <div class="flex items-center gap-2">
+        <span class="tool-field__hint" style="font-family: ui-monospace, monospace;">/</span>
+        <input id="re-pattern" class="tool-input" placeholder="\b\w+@\w+\.\w+\b" style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
+        <span class="tool-field__hint" style="font-family: ui-monospace, monospace;">/</span>
+        <input id="re-flags" class="tool-input" placeholder="gim" value="gm" style="width: 5rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
+    </div>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="re-text">Texte cible</label>
+    <textarea id="re-text" class="tool-textarea" style="min-height: 10rem;" placeholder="Le texte dans lequel chercher"></textarea>
+</div>
+{% endblock %}
+
+{% block tool_output %}
+<div class="tool-field">
+    <label class="tool-field__label">Correspondances</label>
+    <div id="re-highlight" class="tool-output__pre" style="white-space: pre-wrap; min-height: 6rem;"></div>
+</div>
+<div class="tool-field">
+    <label class="tool-field__label">Détails</label>
+    <pre id="re-details" class="tool-output__pre" style="max-height: 12rem;">Aucun résultat</pre>
+</div>
+<span id="re-status" class="tool-field__hint"></span>
+{% endblock %}

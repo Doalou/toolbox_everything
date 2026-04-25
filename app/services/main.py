@@ -14,6 +14,7 @@ import sys
 import time
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import Optional
 
 from flask import (Flask, Response, current_app, g, jsonify, redirect,
@@ -25,12 +26,18 @@ from yt_dlp.postprocessor import FFmpegPostProcessor
 
 from app import __version__
 from app.core.exceptions import register_error_handlers
+from app.core.rate_limit import limiter
+from app.core.security_headers import register_security_headers
+from app.core.uploads import configure_pillow_limits
 from config import Config
 
-from .essentials.routes import essentials_bp
+from .downloader.routes import downloader_bp
+from .essentials import TOOLS as ESSENTIALS_TOOLS
+from .essentials import essentials_bp
+from .essentials import nav_tools as essentials_nav_tools
 from .media_converter.routes import media_bp
 from .pdf_tools.routes import pdf_bp
-from .youtube_downloader.routes import youtube_bp
+from .speedtest.routes import speedtest_bp
 
 DIM = "\033[2m"
 RESET = "\033[0m"
@@ -40,6 +47,14 @@ CYAN = "\033[36m"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
 RED = "\033[31m"
+
+TAILWIND_CRITICAL_CLASSES = (
+    ".hidden",
+    ".flex",
+    ".grid",
+    ".dark\\:bg-gray-900",
+    ".max-w-7xl",
+)
 
 
 def _supports_color() -> bool:
@@ -102,6 +117,12 @@ def _print_banner(app: Flask, ffmpeg_path: Optional[str]) -> None:
         lines.append(row("stirling-pdf", f"{dot(GREEN)} {stirling_url}", GREEN))
     else:
         lines.append(row("stirling-pdf", f"{dot(YELLOW)} non configure", YELLOW))
+
+    librespeed_url = os.environ.get("LIBRESPEED_URL", "").strip()
+    if librespeed_url:
+        lines.append(row("librespeed", f"{dot(GREEN)} {librespeed_url}", GREEN))
+    else:
+        lines.append(row("librespeed", f"{dot(YELLOW)} non configure", YELLOW))
 
     lines.append(row("uploads", app.config.get("UPLOAD_FOLDER", "-")))
     lines.append("")
@@ -168,6 +189,33 @@ def _configure_logging(app: Flask) -> None:
     app.logger.setLevel(logging.DEBUG if app.debug else logging.INFO)
 
 
+def _tailwind_css_status(app: Flask) -> tuple[bool, list[str]]:
+    css_path = Path(app.static_folder or "") / "css" / "tailwind.css"
+    if not css_path.exists():
+        return False, ["app/static/css/tailwind.css"]
+
+    css = css_path.read_text(encoding="utf-8", errors="replace")
+    missing = [selector for selector in TAILWIND_CRITICAL_CLASSES if selector not in css]
+    return not missing, missing
+
+
+def _enforce_tailwind_css_for_docker(app: Flask) -> None:
+    ok, missing = _tailwind_css_status(app)
+    if ok:
+        return
+
+    message = (
+        "Asset Tailwind invalide dans l'image Docker "
+        f"(manquant/incomplet: {', '.join(missing)}). "
+        "Reconstruis l'image avec `docker compose up -d --build`."
+    )
+
+    if os.environ.get("DOCKER_ENV") == "1":
+        raise RuntimeError(message)
+
+    app.logger.warning(message)
+
+
 def create_app(config_class: Optional[object] = None) -> Flask:
     app = Flask(
         __name__,
@@ -189,23 +237,42 @@ def create_app(config_class: Optional[object] = None) -> Flask:
         "STIRLING_PDF_PUBLIC_URL", app.config["STIRLING_PDF_URL"]
     ).strip()
 
+    # LibreSpeed : URL optionnelle pour l'iframe
+    app.config["LIBRESPEED_URL"] = os.environ.get("LIBRESPEED_URL", "").strip()
+    app.config["LIBRESPEED_PUBLIC_URL"] = os.environ.get(
+        "LIBRESPEED_PUBLIC_URL", app.config["LIBRESPEED_URL"]
+    ).strip()
+
     # Proxy reverse
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Logging (avant toute chose utilisant app.logger)
     _configure_logging(app)
 
+    # En Docker, le CSS Tailwind doit être généré au build de l'image.
+    _enforce_tailwind_css_for_docker(app)
+
     # Compression (sous gunicorn aussi)
     Compress(app)
+
+    # Rate limiter (Redis en prod via RATELIMIT_STORAGE_URI, memory:// en dev)
+    limiter.init_app(app)
+
+    # Pillow : plafond de décompression (anti-bombe d'image)
+    configure_pillow_limits(50_000_000)
+
+    # Headers HTTP de sécurité (CSP avec nonce, XFO, HSTS, etc.)
+    register_security_headers(app)
 
     # Cache-Control pour les statiques
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60 * 24 * 7  # 7 jours
 
     # Blueprints
-    app.register_blueprint(youtube_bp, url_prefix="/youtube")
+    app.register_blueprint(downloader_bp, url_prefix="/downloader")
     app.register_blueprint(media_bp, url_prefix="/media")
     app.register_blueprint(essentials_bp, url_prefix="/essentials")
     app.register_blueprint(pdf_bp, url_prefix="/pdf")
+    app.register_blueprint(speedtest_bp, url_prefix="/speedtest")
 
     # Gestionnaires d'erreur (JSON pour APIs, HTML pour pages)
     register_error_handlers(app)
@@ -214,9 +281,9 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     def index():
         return render_template("index.html")
 
-    @app.route("/youtube")
-    def youtube_redirect():
-        return redirect(url_for("youtube.index"))
+    @app.route("/downloader")
+    def downloader_redirect():
+        return redirect(url_for("downloader.index"))
 
     @app.route("/essentials")
     def essentials_redirect():
@@ -226,9 +293,32 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     def pdf_redirect():
         return redirect(url_for("pdf.index"))
 
+    @app.route("/speedtest")
+    def speedtest_redirect():
+        return redirect(url_for("speedtest.index"))
+
+    # --- Backwards-compat : anciens liens /youtube/* ----------------
+    # Conserve la compatibilité des liens externes après le rename
+    # /youtube/ → /downloader/ (v1.3.1). On utilise 308 pour préserver
+    # la méthode HTTP (POST sur /youtube/download → POST /downloader/download).
+    _LEGACY_METHODS = ("GET", "POST", "HEAD", "OPTIONS")
+
+    @app.route("/youtube", methods=_LEGACY_METHODS)
+    @app.route("/youtube/", methods=_LEGACY_METHODS)
+    def _legacy_youtube_root():
+        return redirect(url_for("downloader.index"), code=308)
+
+    @app.route("/youtube/<path:subpath>", methods=_LEGACY_METHODS)
+    def _legacy_youtube_subpath(subpath: str):
+        target = f"/downloader/{subpath}"
+        if request.query_string:
+            target = f"{target}?{request.query_string.decode('latin-1')}"
+        return redirect(target, code=308)
+
     @app.route("/health")
+    @limiter.exempt
     def health() -> Response:
-        """Healthcheck (utilisé par Docker)."""
+        """Healthcheck (utilisé par Docker) — exempté du rate limiter."""
         import yt_dlp
 
         status = {
@@ -237,6 +327,8 @@ def create_app(config_class: Optional[object] = None) -> Flask:
             "yt_dlp": yt_dlp.version.__version__,
             "ffmpeg": bool(app.config.get("FFMPEG_PATH")),
             "stirling_pdf": bool(app.config.get("STIRLING_PDF_URL")),
+            "librespeed": bool(app.config.get("LIBRESPEED_URL")),
+            "tailwind_css": _tailwind_css_status(app)[0],
         }
         return jsonify(status)
 
@@ -258,13 +350,35 @@ def create_app(config_class: Optional[object] = None) -> Flask:
         )
         return response
 
+    # Routes qui renvoient toujours du JSON (endpoints d'API,
+    # même pour les erreurs comme 429, 400, 500).
+    API_ROUTE_PREFIXES = (
+        "/downloader/info",
+        "/downloader/download",
+        "/media/convert",
+        "/media/batch",
+        "/pdf/status",
+        "/essentials/api",
+    )
+
+    def _wants_json(req) -> bool:
+        if req.path.startswith(API_ROUTE_PREFIXES):
+            return True
+        if req.is_json:
+            return True
+        accept = req.headers.get("Accept", "")
+        return "application/json" in accept and "text/html" not in accept
+
     @app.errorhandler(HTTPException)
     def _handle_http(error: HTTPException):
-        # Pour les routes API (/api/..., JSON attendu) → JSON
-        accept = request.headers.get("Accept", "")
-        if request.path.startswith(("/youtube/", "/media/", "/essentials/api", "/pdf/api")) and "application/json" in accept:
+        if _wants_json(request):
             return (
-                jsonify({"error": error.description or error.name, "error_code": error.name.upper().replace(" ", "_")}),
+                jsonify(
+                    {
+                        "error": error.description or error.name,
+                        "error_code": error.name.upper().replace(" ", "_"),
+                    }
+                ),
                 error.code or 500,
             )
 
@@ -285,6 +399,9 @@ def create_app(config_class: Optional[object] = None) -> Flask:
             "current_year": datetime.now().year,
             "app_version": __version__,
             "stirling_enabled": bool(app.config.get("STIRLING_PDF_URL")),
+            "librespeed_enabled": bool(app.config.get("LIBRESPEED_URL")),
+            "essentials_tools_all": ESSENTIALS_TOOLS,
+            "essentials_tools_nav": essentials_nav_tools(limit=6),
         }
 
     # Bannière : uniquement si explicitement demandé (run.py en dev)

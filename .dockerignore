@@ -88,6 +88,10 @@ yarn-error.log*
 .nyc_output
 coverage/
 
+# Assets/outils générés localement : Docker les reconstruit lui-même
+bin/
+app/static/css/tailwind.css
+
 # Fichiers Docker (exclus du build)
 Dockerfile
 docker-compose.yml

@@ -1,0 +1,31 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label" for="color-base">Couleur de base</label>
+    <div class="tool-color-row">
+        <input id="color-base" type="color" value="#3b82f6" class="w-14 h-14 rounded-lg border border-gray-300 dark:border-gray-700 cursor-pointer">
+        <input id="color-hex" type="text" class="tool-input" value="#3B82F6" style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
+    </div>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="color-type">Type de palette</label>
+    <select id="color-type" class="tool-select">
+        <option value="monochromatic">Monochrome</option>
+        <option value="analogous">Analogue</option>
+        <option value="complementary" selected>Complémentaire</option>
+        <option value="triadic">Triadique</option>
+        <option value="tetradic">Tétradique</option>
+    </select>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="color-count">Nombre de couleurs : <span data-color-count>5</span></label>
+    <input id="color-count" type="range" min="3" max="10" value="5" class="tool-range">
+</div>
+{% endblock %}
+
+{% block tool_output %}
+<div id="color-results" class="flex flex-col gap-2"></div>
+{% endblock %}

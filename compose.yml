@@ -6,8 +6,8 @@
 #   1) BUILD LOCAL (dev, CI) :
 #        docker compose up -d --build
 #
-#   2) IMAGE DOCKER HUB (prod) :
-#        export TOOLBOX_IMAGE=doalo/toolbox-everything:1.3.0
+#   2) IMAGE GHCR (prod) :
+#        export TOOLBOX_IMAGE=ghcr.io/doalou/toolbox_everything:1.3.1
 #        docker compose pull
 #        docker compose up -d
 #
@@ -18,12 +18,12 @@
 
 services:
   toolbox:
-    image: ${TOOLBOX_IMAGE:-toolbox-everything:${APP_VERSION:-1.3.0}}
+    image: ${TOOLBOX_IMAGE:-ghcr.io/doalou/toolbox_everything:${APP_VERSION:-1.3.1}}
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        APP_VERSION: ${APP_VERSION:-1.3.0}
+        APP_VERSION: ${APP_VERSION:-1.3.1}
     container_name: toolbox-everything
     ports:
       - "${TOOLBOX_PORT:-8000}:8000"
@@ -35,14 +35,23 @@ services:
       - FLASK_APP=run.py
       - FLASK_ENV=${FLASK_ENV:-production}
       - PYTHONUNBUFFERED=1
-      - APP_VERSION=${APP_VERSION:-1.3.0}
+      - APP_VERSION=${APP_VERSION:-1.3.1}
       # URL interne (réseau Docker) utilisée par le healthcheck /health
       - STIRLING_PDF_URL=${STIRLING_PDF_URL:-http://stirling-pdf:8080}
       # URL publique utilisée par l'iframe côté navigateur
       - STIRLING_PDF_PUBLIC_URL=${STIRLING_PDF_PUBLIC_URL:-http://localhost:8080}
+      # LibreSpeed : URL interne + URL publique iframe
+      - LIBRESPEED_URL=${LIBRESPEED_URL:-http://librespeed}
+      - LIBRESPEED_PUBLIC_URL=${LIBRESPEED_PUBLIC_URL:-http://localhost:8081}
+      # Rate limiter : Redis partagé entre les workers gunicorn
+      - RATELIMIT_STORAGE_URI=${RATELIMIT_STORAGE_URI:-redis://redis:6379/0}
     depends_on:
       stirling-pdf:
         condition: service_started
+      librespeed:
+        condition: service_started
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
@@ -133,6 +142,78 @@ services:
           memory: 2G
         reservations:
           memory: 512M
+
+  # ---------------------------------------------------------------
+  # LibreSpeed — instance de test débit embarquée via iframe.
+  #
+  # Service stateless : aucune donnée utilisateur persistée par
+  # Toolbox. Le port public sert uniquement à l'affichage iframe.
+  # ---------------------------------------------------------------
+  librespeed:
+    image: lscr.io/linuxserver/librespeed:latest
+    container_name: toolbox-librespeed
+    ports:
+      - "${LIBRESPEED_PORT:-8081}:80"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ:-Europe/Paris}
+      - MODE=standalone
+      - TELEMETRY=false
+      - ENABLE_ID_OBFUSCATION=true
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - toolbox_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # ---------------------------------------------------------------
+  # Redis — backend du rate limiter (Flask-Limiter).
+  #
+  # - In-memory only (pas de persistance disque activée) : les
+  #   compteurs de rate limit sont éphémères par design.
+  # - Pas de port exposé à l'extérieur : accessible uniquement
+  #   depuis le réseau Docker.
+  # - `--maxmemory 64mb --maxmemory-policy allkeys-lru` : pas de
+  #   risque d'OOM, les clés expirées sont évincées automatiquement.
+  # ---------------------------------------------------------------
+  redis:
+    image: redis:7.4-alpine
+    container_name: toolbox-redis
+    command:
+      - redis-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - "64mb"
+      - --maxmemory-policy
+      - "allkeys-lru"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - toolbox_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 96M
 
 networks:
   toolbox_network:

@@ -1,104 +1,95 @@
-"""Tests unitaires des outils essentiels (sans Flask)."""
+"""Tests d'intégration pour les outils essentials v1.3.1.
+
+Les outils sont désormais 100% client-side — on teste donc que :
+  - chaque sous-blueprint est correctement enregistré (GET 200),
+  - la homepage liste tous les outils de la registry,
+  - le menu nav affiche un sous-ensemble,
+  - les anciennes routes API renvoient bien 404 (confirmation de migration).
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from app.services.essentials.tools import (Base64Encoder, ColorPaletteGenerator,
-                                            HashCalculator, JSONFormatter,
-                                            PasswordGenerator, QRCodeGenerator,
-                                            TextProcessor, TimestampConverter)
+from app.services.essentials import TOOLS, nav_tools
 
 
-def test_password_length_and_types():
-    pw = PasswordGenerator().generate(length=20)
-    assert len(pw) == 20
-    # au moins 3 des 4 types de caractères (par construction)
-    has_lower = any(c.islower() for c in pw)
-    has_upper = any(c.isupper() for c in pw)
-    has_digit = any(c.isdigit() for c in pw)
-    assert sum([has_lower, has_upper, has_digit]) >= 2
+@pytest.mark.parametrize("tool", TOOLS, ids=lambda t: t.slug)
+def test_each_tool_page_renders(client, tool):
+    """Chaque outil enregistré répond 200 sur sa page principale
+    et charge son script JS via le layout commun.
+    """
+    with client.application.test_request_context():
+        from flask import url_for
+        path = url_for(tool.endpoint)
+    resp = client.get(path)
+    assert resp.status_code == 200, f"{tool.slug} a répondu {resp.status_code}"
+    # Le layout commun charge /static/js/essentials/<slug>.js
+    assert f"js/essentials/{tool.slug}.js".encode() in resp.data
+    # L'icône FA de l'outil apparaît dans l'en-tête du layout
+    assert tool.icon.encode() in resp.data
 
 
-def test_password_invalid_when_nothing_selected():
-    with pytest.raises(ValueError):
-        PasswordGenerator().generate(
-            length=12,
-            uppercase=False,
-            lowercase=False,
-            numbers=False,
-            symbols=False,
-        )
+def test_registry_has_all_13_tools():
+    """La registry contient bien les 13 outils attendus de la v1.3.1."""
+    slugs = {t.slug for t in TOOLS}
+    expected = {
+        "qr", "password", "hash", "base64", "json", "timestamp", "color",
+        "uuid", "jwt", "regex", "url", "lorem", "diff",
+    }
+    assert slugs == expected, f"Tools attendus: {expected}, obtenus: {slugs}"
 
 
-def test_base64_roundtrip():
-    encoder = Base64Encoder()
-    plain = "Toolbox Everything 🚀"
-    encoded = encoder.encode(plain)
-    assert encoder.decode(encoded) == plain
+def test_nav_tools_is_subset():
+    """nav_tools() retourne un sous-ensemble (pas tous les outils dans la nav)."""
+    nav = nav_tools()
+    assert 0 < len(nav) < len(TOOLS)
+    for t in nav:
+        assert t.in_nav is True
 
 
-def test_hash_sha256_stable():
-    h = HashCalculator().calculate("hello", "sha256")
-    assert h["algorithm"] == "sha256"
-    assert h["hash"] == "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+def test_nav_tools_limit():
+    """Le paramètre limit plafonne le nombre d'outils retournés."""
+    assert len(nav_tools(limit=3)) == 3
+    assert len(nav_tools(limit=100)) <= len([t for t in TOOLS if t.in_nav])
 
 
-def test_hash_rejects_unknown_algorithm():
-    with pytest.raises(ValueError):
-        HashCalculator().calculate("x", "does-not-exist")
+def test_essentials_index_lists_all_tools(client):
+    """La homepage essentials liste chacun des outils (lien présent vers son URL)."""
+    resp = client.get("/essentials/")
+    assert resp.status_code == 200
+    with client.application.test_request_context():
+        from flask import url_for
+        for tool in TOOLS:
+            expected_href = f'href="{url_for(tool.endpoint)}"'.encode()
+            assert expected_href in resp.data, (
+                f"{tool.slug} absent de la homepage (href {expected_href!r})"
+            )
 
 
-def test_qr_code_returns_data_uri():
-    data = QRCodeGenerator().generate("hello world")
-    assert data.startswith("data:image/png;base64,")
-    assert len(data) > 200
+def test_uuid_card_has_indigo_accent(client):
+    """La carte UUID garde son fond d'accent sur la homepage essentials."""
+    resp = client.get("/essentials/")
+    assert resp.status_code == 200
+    assert b"site-dropdown__icon site-dropdown__icon--indigo" in resp.data
+    assert b"UUID" in resp.data
 
 
-def test_text_analyze_basic():
-    result = TextProcessor().analyze("Hello world.\nAnother line.")
-    stats = result["statistics"]
-    assert stats["words"] == 4
-    assert stats["lines"] == 2
-    assert stats["sentences"] == 2
-
-
-def test_text_format_operations():
-    tp = TextProcessor()
-    assert tp.format_text("hello", "uppercase") == "HELLO"
-    assert tp.format_text("HELLO", "lowercase") == "hello"
-    assert tp.format_text("hello world", "reverse") == "dlrow olleh"
-
-
-def test_color_palette_generates_count():
-    palette = ColorPaletteGenerator().generate("#3B82F6", "complementary", 4)
-    assert len(palette) == 4
-    for item in palette:
-        assert item["hex"].startswith("#")
-        assert item["rgb"].startswith("rgb(")
-
-
-def test_json_formatter_format_and_minify():
-    formatter = JSONFormatter()
-    result = formatter.process('{"a": 1, "b": [1, 2]}', "format")
-    assert result["is_valid"] is True
-    assert "formatted" in result
-    assert "\n" in result["formatted"]
-
-    minified = formatter.process('{"a": 1}', "minify")
-    assert minified["minified"] == '{"a":1}'
-
-
-def test_json_formatter_invalid():
-    result = JSONFormatter().process("{not valid", "format")
-    assert result["is_valid"] is False
-    assert "error" in result
-
-
-def test_timestamp_roundtrip():
-    tc = TimestampConverter()
-    d = tc.timestamp_to_date(0)
-    assert d["iso"].startswith("1970-01-01")
-
-    back = tc.date_to_timestamp("1970-01-01 00:00:00")
-    assert back["timestamp"] == 0
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/essentials/api/qr-code",
+        "/essentials/api/password",
+        "/essentials/api/hash",
+        "/essentials/api/base64",
+        "/essentials/api/json/format",
+        "/essentials/api/text/process",
+        "/essentials/api/url/validate",
+        "/essentials/api/colors/palette",
+        "/essentials/api/timestamp/convert",
+    ],
+)
+def test_old_api_routes_are_gone(client, path):
+    """Les anciennes routes API doivent avoir disparu (tout est client-side)."""
+    resp = client.post(path, json={})
+    assert resp.status_code == 404

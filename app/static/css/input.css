@@ -1,0 +1,20 @@
+/*
+ * Tailwind CSS, point d'entree.
+ * Compilé vers `tailwind.css` via le CLI standalone (cf. tailwind.config.js).
+ * Ne jamais editer directement `tailwind.css`; il est regenere a chaque build.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styles globaux micro */
+@layer base {
+  body {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+  body.loaded {
+    opacity: 1;
+  }
+}

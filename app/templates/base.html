@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Toolbox Everything — YouTube downloader, convertisseur média, outils essentiels et 150+ opérations PDF, le tout dans une interface moderne.">
+    <meta name="description" content="Toolbox Everything, téléchargeur vidéo, convertisseur média, outils essentiels, speedtest et outils PDF.">
     <meta name="theme-color" content="#2563eb">
     <title>{% block title %}Toolbox Everything{% endblock %}</title>
 
@@ -16,141 +16,40 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Toolbox Everything">
     <meta property="og:title" content="Toolbox Everything">
-    <meta property="og:description" content="Boîte à outils web : YouTube, conversion média, outils essentiels et 150+ opérations PDF.">
+    <meta property="og:description" content="Boîte à outils web : téléchargement vidéo, conversion média, outils essentiels et 150+ opérations PDF.">
     <meta property="og:image" content="{{ url_for('static', filename='img/logo-filled.svg', _external=True) }}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Toolbox Everything">
-    <meta name="twitter:description" content="Boîte à outils web tout-en-un, self-hosted et open source.">
+    <meta name="twitter:description" content="Téléchargement, conversion, outils essentiels, speedtest et PDF.">
     <meta name="twitter:image" content="{{ url_for('static', filename='img/logo-filled.svg', _external=True) }}">
-    <script>
+    <script nonce="{{ csp_nonce }}">
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
-            document.documentElement.style.backgroundColor = '#111827'; // bg-gray-900
+            document.documentElement.style.backgroundColor = '#111827';
         } else {
             document.documentElement.classList.remove('dark');
-            document.documentElement.style.backgroundColor = '#f9fafb'; // bg-gray-50
+            document.documentElement.style.backgroundColor = '#f9fafb';
         }
     </script>
 
-    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/tailwind.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='vendor/fontawesome/css/all.min.css') }}" as="style">
     <link rel="preload" href="{{ url_for('static', filename='css/style.css') }}" as="style">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            100: '#1a1a1a',
-                            200: '#2d2d2d',
-                            300: '#404040'
-                        },
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        }
-                    },
-                    animation: {
-                        'gradient': 'gradient 8s linear infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        gradient: {
-                            '0%, 100%': {
-                                'background-size': '200% 200%',
-                                'background-position': 'left center'
-                            },
-                            '50%': {
-                                'background-size': '200% 200%',
-                                'background-position': 'right center'
-                            }
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
 
-        body {
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-        body.loaded {
-            opacity: 1;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fontawesome/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
         {% set endpoint = request.endpoint or '' %}
         {% set is_home = endpoint == 'index' %}
-        {% set is_youtube = endpoint.startswith('youtube.') %}
+        {% set is_downloader = endpoint.startswith('downloader.') %}
         {% set is_media = endpoint.startswith('media.') %}
         {% set is_essentials = endpoint.startswith('essentials.') %}
         {% set is_pdf = endpoint.startswith('pdf.') %}
-        {% set essentials_tools = [
-            {
-                'endpoint': 'essentials.qr_generator',
-                'label': 'QR Code',
-                'description': 'Créer en un clic',
-                'icon': 'fa-qrcode',
-                'accent': 'sky'
-            },
-            {
-                'endpoint': 'essentials.password_generator',
-                'label': 'Mot de passe',
-                'description': 'Générer plus vite',
-                'icon': 'fa-key',
-                'accent': 'emerald'
-            },
-            {
-                'endpoint': 'essentials.text_processor',
-                'label': 'Texte',
-                'description': 'Nettoyer et transformer',
-                'icon': 'fa-file-alt',
-                'accent': 'violet'
-            },
-            {
-                'endpoint': 'essentials.color_palette',
-                'label': 'Palette',
-                'description': 'Choisir les bonnes teintes',
-                'icon': 'fa-palette',
-                'accent': 'pink'
-            },
-            {
-                'endpoint': 'essentials.hash_calculator',
-                'label': 'Hash',
-                'description': 'Comparer et vérifier',
-                'icon': 'fa-hashtag',
-                'accent': 'rose'
-            },
-            {
-                'endpoint': 'essentials.base64_tool',
-                'label': 'Base64',
-                'description': 'Encoder ou décoder',
-                'icon': 'fa-code',
-                'accent': 'amber'
-            }
-        ] %}
+        {% set is_speedtest = endpoint.startswith('speedtest.') %}
+        {% set essentials_tools = essentials_tools_nav %}
 
         <!-- Header -->
         <nav class="site-header">
@@ -162,7 +61,10 @@
                                 <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="site-brand__logo" width="44" height="44" loading="eager" decoding="async">
                             </span>
                             <span class="site-brand__copy">
-                                <span class="site-brand__name">Toolbox <span class="site-brand__name-accent">Everything</span></span>
+                                <span class="site-brand__name">
+                                    <span class="site-brand__name-gradient">Toolbox</span>
+                                    <span class="site-brand__name-accent">Everything</span>
+                                </span>
                             </span>
                         </a>
                     </div>
@@ -183,7 +85,7 @@
                                     <div class="site-dropdown__header">
                                         <div>
                                             <p class="site-dropdown__title">Les essentiels</p>
-                                            <p class="site-dropdown__copy">Une liste courte, utile et propre pour les outils du quotidien.</p>
+                                            <p class="site-dropdown__copy">Les outils du quotidien.</p>
                                         </div>
                                         <a href="{{ url_for('essentials.index') }}" class="site-dropdown__all">Tout voir</a>
                                     </div>
@@ -195,8 +97,8 @@
                                                     <i class="fas {{ tool.icon }} text-xs"></i>
                                                 </span>
                                                 <span class="site-dropdown__content">
-                                                    <span class="site-dropdown__label">{{ tool.label }}</span>
-                                                    <span class="site-dropdown__caption">{{ tool.description }}</span>
+                                                    <span class="site-dropdown__label">{{ tool.short_title }}</span>
+                                                    <span class="site-dropdown__caption">{{ tool.caption }}</span>
                                                 </span>
                                             </a>
                                         {% endfor %}
@@ -204,13 +106,24 @@
                                 </div>
                             </div>
 
-                            <a href="{{ url_for('youtube.index') }}" class="site-nav__link {{ 'site-nav__link--active' if is_youtube else '' }}">
-                                <span>YouTube</span>
+                            <a href="{{ url_for('downloader.index') }}" class="site-nav__link {{ 'site-nav__link--active' if is_downloader else '' }}">
+                                <span>Downloader</span>
                             </a>
 
                             <a href="{{ url_for('media.index') }}" class="site-nav__link {{ 'site-nav__link--active' if is_media else '' }}">
                                 <span>Conversion</span>
                             </a>
+
+                            {% if librespeed_enabled %}
+                                <a href="{{ url_for('speedtest.index') }}" class="site-nav__link {{ 'site-nav__link--active' if is_speedtest else '' }}">
+                                    <span>Speedtest</span>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('speedtest.index') }}" class="site-nav__link {{ 'site-nav__link--active' if is_speedtest else '' }}" title="Configurer LibreSpeed pour l'activer">
+                                    <span>Speedtest</span>
+                                    <span class="header-soon-badge">setup</span>
+                                </a>
+                            {% endif %}
 
                             {% if stirling_enabled %}
                                 <a href="{{ url_for('pdf.index') }}" class="site-nav__link {{ 'site-nav__link--active' if is_pdf else '' }}">
@@ -226,12 +139,12 @@
                     </div>
 
                     <div class="site-header__actions">
-                        <button onclick="toggleTheme()" class="header-icon-button" aria-label="Changer le thème">
+                        <button type="button" id="themeToggle" class="header-icon-button" aria-label="Changer le thème">
                             <i class="fas fa-sun hidden dark:inline text-sm"></i>
                             <i class="fas fa-moon dark:hidden text-sm"></i>
                         </button>
 
-                        <button id="mobileMenuBtn" class="header-icon-button lg:hidden" aria-label="Ouvrir le menu principal" aria-controls="mobileMenu" aria-expanded="false">
+                        <button type="button" id="mobileMenuBtn" class="header-icon-button header-icon-button--mobile" aria-label="Ouvrir le menu principal" aria-controls="mobileMenu" aria-expanded="false">
                             <i class="fas fa-bars text-sm"></i>
                         </button>
                     </div>
@@ -247,7 +160,7 @@
                                 <span>Accueil</span>
                             </a>
 
-                            <button type="button" id="essentials-toggle" class="mobile-menu__link {{ 'mobile-menu__link--active' if is_essentials else '' }}" onclick="toggleMobileSubMenu('essentials')" aria-expanded="{{ 'true' if is_essentials else 'false' }}">
+                            <button type="button" id="essentials-toggle" class="mobile-menu__link {{ 'mobile-menu__link--active' if is_essentials else '' }}" data-mobile-submenu-toggle="essentials" aria-expanded="{{ 'true' if is_essentials else 'false' }}">
                                 <span>Essentiels</span>
                                 <i class="fas fa-chevron-down text-[10px] transition-transform duration-150 {{ 'rotate-180' if is_essentials else '' }}" id="essentials-chevron"></i>
                             </button>
@@ -259,19 +172,26 @@
                                             <i class="fas {{ tool.icon }} text-xs"></i>
                                         </span>
                                         <span class="mobile-menu__tool-copy">
-                                            <span class="mobile-menu__tool-title">{{ tool.label }}</span>
-                                            <span class="mobile-menu__tool-caption">{{ tool.description }}</span>
+                                            <span class="mobile-menu__tool-title">{{ tool.short_title }}</span>
+                                            <span class="mobile-menu__tool-caption">{{ tool.caption }}</span>
                                         </span>
                                     </a>
                                 {% endfor %}
                             </div>
 
-                            <a href="{{ url_for('youtube.index') }}" data-close-mobile-menu class="mobile-menu__link {{ 'mobile-menu__link--active' if is_youtube else '' }}">
-                                <span>YouTube</span>
+                            <a href="{{ url_for('downloader.index') }}" data-close-mobile-menu class="mobile-menu__link {{ 'mobile-menu__link--active' if is_downloader else '' }}">
+                                <span>Downloader</span>
                             </a>
 
                             <a href="{{ url_for('media.index') }}" data-close-mobile-menu class="mobile-menu__link {{ 'mobile-menu__link--active' if is_media else '' }}">
                                 <span>Conversion</span>
+                            </a>
+
+                            <a href="{{ url_for('speedtest.index') }}" data-close-mobile-menu class="mobile-menu__link {{ 'mobile-menu__link--active' if is_speedtest else '' }}">
+                                <span>Speedtest</span>
+                                {% if not librespeed_enabled %}
+                                    <span class="header-soon-badge">setup</span>
+                                {% endif %}
                             </a>
 
                             <a href="{{ url_for('pdf.index') }}" data-close-mobile-menu class="mobile-menu__link {{ 'mobile-menu__link--active' if is_pdf else '' }}">
@@ -308,28 +228,30 @@
 
     <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <script>
-        function toggleTheme() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                document.documentElement.style.backgroundColor = '#f9fafb'; // bg-gray-50
-                localStorage.theme = 'light';
-            } else {
-                document.documentElement.classList.add('dark');
-                document.documentElement.style.backgroundColor = '#111827'; // bg-gray-900
-                localStorage.theme = 'dark';
-            }
-        }
-
+    <script nonce="{{ csp_nonce }}">
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 document.body.classList.add('loaded');
             }, 10);
 
+            const themeToggle = document.getElementById('themeToggle');
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const mobileMenu = document.getElementById('mobileMenu');
             const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
             let mobileMenuHideTimer = null;
+
+            const setTheme = (theme) => {
+                const isDark = theme === 'dark';
+                document.documentElement.classList.toggle('dark', isDark);
+                document.documentElement.style.backgroundColor = isDark ? '#111827' : '#f9fafb';
+                localStorage.theme = theme;
+            };
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+                });
+            }
 
             const openMobileMenu = () => {
                 if (!mobileMenu) {
@@ -400,6 +322,23 @@
                 link.addEventListener('click', () => closeMobileMenu(true));
             });
 
+            document.querySelectorAll('[data-mobile-submenu-toggle]').forEach((toggleButton) => {
+                toggleButton.addEventListener('click', () => {
+                    const id = toggleButton.dataset.mobileSubmenuToggle;
+                    const submenu = document.getElementById(`${id}-submenu`);
+                    const chevron = document.getElementById(`${id}-chevron`);
+
+                    if (!submenu) {
+                        return;
+                    }
+
+                    submenu.classList.toggle('hidden');
+                    const isExpanded = !submenu.classList.contains('hidden');
+                    chevron?.classList.toggle('rotate-180', isExpanded);
+                    toggleButton.setAttribute('aria-expanded', String(isExpanded));
+                });
+            });
+
             window.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape') {
                     closeMobileMenu();
@@ -412,23 +351,7 @@
                 }
             });
         });
-        
-        function toggleMobileSubMenu(id) {
-            const submenu = document.getElementById(`${id}-submenu`);
-            const chevron = document.getElementById(`${id}-chevron`);
-            const toggleButton = document.getElementById(`${id}-toggle`);
-            
-            submenu.classList.toggle('hidden');
-            const isExpanded = !submenu.classList.contains('hidden');
-
-            chevron.classList.toggle('rotate-180', isExpanded);
-
-            if (toggleButton) {
-                toggleButton.setAttribute('aria-expanded', String(isExpanded));
-            }
-        }
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
-

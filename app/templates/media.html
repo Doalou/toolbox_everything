@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% block title %}Convertisseur média | Toolbox Everything{% endblock %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 py-10">
     <div class="tool-hero">
@@ -7,7 +9,7 @@
             Convertisseur <span style="color: #2563eb;">Média</span>
         </h1>
         <p class="tool-hero__subtitle">
-            Convertissez vos images et vidéos en quelques clics, sans perte de qualité.
+            Convertissez vos images et vidéos au format voulu.
         </p>
     </div>
 
@@ -24,7 +26,7 @@
         <p class="tool-dropzone__title">Glissez vos fichiers ici</p>
         <p class="tool-dropzone__hint">
             ou
-            <button type="button" onclick="document.getElementById('fileInput').click()"
+            <button type="button" data-browse-files
                     class="tool-dropzone__browse">parcourez vos fichiers</button>
         </p>
         <p class="tool-dropzone__formats">JPG, PNG, WEBP, GIF, MP4, WEBM</p>
@@ -36,7 +38,7 @@
                 <i class="fas fa-folder-open text-blue-500"></i>
                 Fichiers sélectionnés
             </h3>
-            <div id="fileList" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+            <div id="fileList" class="media-file-grid"></div>
         </div>
 
         <div class="tool-panel">
@@ -84,15 +86,15 @@
         <div class="inline-flex items-center justify-center w-12 h-12 mb-4">
             <i class="fas fa-circle-notch text-2xl text-indigo-500 animate-spin"></i>
         </div>
-        <p class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Conversion en cours…</p>
+        <p class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Conversion en cours</p>
         <div class="tool-progress mb-2">
             <div id="progressBar" class="tool-progress__bar" style="width: 0%"></div>
         </div>
-        <p id="progressText" class="tool-meta justify-center">Préparation…</p>
+        <p id="progressText" class="tool-meta justify-center">Préparation</p>
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     const bg = type === 'error' ? 'background:#dc2626' : 'background:#059669';
@@ -127,7 +129,7 @@ function updateFileList() {
                        </div>`}
             </div>
             <div class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 truncate">${file.name}</div>
-            <button onclick="removeFile(${index})"
+            <button type="button" data-remove-file="${index}"
                     class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px]
                            flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <i class="fas fa-times"></i>
@@ -142,6 +144,12 @@ function removeFile(index) {
     selectedFiles.splice(index, 1);
     updateFileList();
 }
+
+fileList.addEventListener('click', (event) => {
+    const removeButton = event.target.closest('[data-remove-file]');
+    if (!removeButton) return;
+    removeFile(Number(removeButton.dataset.removeFile));
+});
 
 dropZone.addEventListener('click', () => fileInput.click());
 
@@ -225,7 +233,7 @@ conversionForm.addEventListener('submit', async (e) => {
     } finally {
         loadingOverlay.classList.add('hidden');
         progressBar.style.width = '0%';
-        progressText.textContent = 'Préparation…';
+        progressText.textContent = 'Préparation';
     }
 });
 </script>

@@ -13,22 +13,21 @@
             <span class="home-hero__title-accent">plus d'outils.</span>
         </h1>
         <p class="home-hero__subtitle">
-            Tout ce dont vous avez besoin au quotidien, regroupé dans une seule interface.
-            Pas de compte, pas d'attente.
+            Téléchargement, conversion, outils essentiels, speedtest et PDF.
         </p>
     </div>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 max-w-7xl mx-auto relative z-10">
+    <div class="home-card-grid">
         <div class="home-card group">
             <div class="p-7">
                 <div class="home-card__icon home-card__icon--red mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
-                    <i class="fab fa-youtube text-2xl"></i>
+                    <i class="fas fa-cloud-arrow-down text-2xl"></i>
                 </div>
-                <h2 class="home-card__title mb-3">YouTube Downloader</h2>
+                <h2 class="home-card__title mb-3">Downloader</h2>
                 <p class="home-card__text mb-5">
-                    Téléchargez vos vidéos YouTube en MP4 ou MP3, en haute qualité.
+                    Récupérez une vidéo ou la piste audio depuis YouTube, Vimeo, Dailymotion ou TikTok.
                 </p>
-                <a href="{{ url_for('youtube.index') }}"
+                <a href="{{ url_for('downloader.index') }}"
                    class="home-card__cta home-card__cta--red">
                     Commencer
                     <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
@@ -43,7 +42,7 @@
                 </div>
                 <h2 class="home-card__title mb-3">Convertisseur Média</h2>
                 <p class="home-card__text mb-5">
-                    Convertissez vos images et vidéos en quelques clics, sans perte.
+                    Convertissez images et vidéos au format voulu.
                 </p>
                 <a href="{{ url_for('media.index') }}"
                    class="home-card__cta home-card__cta--blue">
@@ -77,11 +76,28 @@
                 </div>
                 <h2 class="home-card__title mb-3">Outils PDF</h2>
                 <p class="home-card__text mb-5">
-                    150+ opérations PDF via Stirling PDF : fusionner, découper, compresser, OCR…
+                    Fusion, découpe, compression et OCR avec Stirling PDF.
                 </p>
                 <a href="{{ url_for('pdf.index') }}"
                    class="home-card__cta home-card__cta--violet">
                     {{ 'Ouvrir' if stirling_enabled else 'Configurer' }}
+                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="home-card group">
+            <div class="p-7">
+                <div class="home-card__icon home-card__icon--emerald mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fas fa-gauge-high text-2xl"></i>
+                </div>
+                <h2 class="home-card__title mb-3">Speedtest</h2>
+                <p class="home-card__text mb-5">
+                    Mesurez le débit et la latence avec LibreSpeed.
+                </p>
+                <a href="{{ url_for('speedtest.index') }}"
+                   class="home-card__cta home-card__cta--emerald">
+                    {{ 'Tester' if librespeed_enabled else 'Configurer' }}
                     <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
                 </a>
             </div>

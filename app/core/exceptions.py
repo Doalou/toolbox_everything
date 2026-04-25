@@ -75,11 +75,11 @@ class ConversionError(ToolboxBaseException):
             self.details["format_to"] = format_to
 
 
-class YouTubeDownloadError(ToolboxBaseException):
-    """Erreur lors du téléchargement YouTube"""
+class DownloaderError(ToolboxBaseException):
+    """Erreur lors d'un téléchargement vidéo/audio (yt-dlp)."""
 
     def __init__(self, message: str, video_url: str = None, **kwargs):
-        super().__init__(message, "YOUTUBE_DOWNLOAD_ERROR", 500, **kwargs)
+        super().__init__(message, "DOWNLOADER_ERROR", 500, **kwargs)
         if video_url:
             self.details["video_url"] = video_url
 

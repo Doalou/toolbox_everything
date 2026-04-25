@@ -1,0 +1,25 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-btn-row">
+    <button class="tool-btn tool-btn--sm tool-btn--indigo" data-url-op="encode" aria-selected="true">Encoder</button>
+    <button class="tool-btn tool-btn--sm tool-btn--ghost" data-url-op="decode" aria-selected="false">Décoder</button>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="url-input">Entrée</label>
+    <textarea id="url-input" class="tool-textarea" placeholder="Tapez une chaîne à encoder ou une URL à décoder"></textarea>
+</div>
+{% endblock %}
+
+{% block tool_output %}
+<div class="tool-field">
+    <label class="tool-field__label">Résultat</label>
+    <textarea id="url-output" class="tool-textarea" readonly></textarea>
+    <div class="tool-btn-row">
+        <button class="tool-btn tool-btn--sm tool-btn--ghost" data-copy-target="#url-output">
+            <i class="fas fa-copy text-xs"></i> Copier
+        </button>
+    </div>
+</div>
+{% endblock %}

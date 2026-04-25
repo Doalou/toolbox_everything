@@ -2,7 +2,7 @@
 const NOTIFICATION_DURATION = 3000;
 const NOTIFICATION_TYPES = { ERROR: 'error', SUCCESS: 'success' };
 
-// Création de notification moderne
+// Creation de notification
 const createNotification = (message, type = NOTIFICATION_TYPES.SUCCESS) => {
     const element = document.createElement('div');
     element.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
@@ -32,7 +32,7 @@ const createNotification = (message, type = NOTIFICATION_TYPES.SUCCESS) => {
 function showNotification(message, type = 'success') {
     const notificationsContainer = document.getElementById('notifications');
     if (!notificationsContainer) {
-        // Fallback à la notification moderne si le container n'existe pas
+        // Fallback si le conteneur n'existe pas
         createNotification(message, type);
         return;
     }

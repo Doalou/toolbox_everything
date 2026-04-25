@@ -1,0 +1,32 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label">Unité</label>
+    <div class="tool-btn-row">
+        <button class="tool-btn tool-btn--sm tool-btn--indigo" data-lorem-unit="paragraphs" aria-selected="true">Paragraphes</button>
+        <button class="tool-btn tool-btn--sm tool-btn--ghost" data-lorem-unit="sentences" aria-selected="false">Phrases</button>
+        <button class="tool-btn tool-btn--sm tool-btn--ghost" data-lorem-unit="words" aria-selected="false">Mots</button>
+    </div>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="lorem-count">Quantité : <span data-lorem-count>3</span></label>
+    <input id="lorem-count" type="range" min="1" max="20" value="3" class="tool-range">
+</div>
+
+<label class="tool-check"><input type="checkbox" id="lorem-classic" checked> Commencer par « Lorem ipsum »</label>
+
+<button id="lorem-regen" class="tool-btn tool-btn--indigo tool-btn--full">
+    <i class="fas fa-wand-magic-sparkles text-xs"></i> Régénérer
+</button>
+{% endblock %}
+
+{% block tool_output %}
+<pre id="lorem-output" class="tool-output__pre" style="min-height: 14rem; white-space: pre-wrap;"></pre>
+<div class="tool-btn-row">
+    <button class="tool-btn tool-btn--sm tool-btn--ghost" data-copy-target="#lorem-output">
+        <i class="fas fa-copy text-xs"></i> Copier
+    </button>
+</div>
+{% endblock %}

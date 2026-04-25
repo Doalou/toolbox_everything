@@ -3,7 +3,7 @@ Configuration globale de Toolbox Everything.
 
 Centralise chemins, limites, et quelques listes blanches. La détection FFmpeg
 est ici la seule source de vérité — plus de duplication dans `main.py` ou
-dans le blueprint YouTube.
+dans le blueprint downloader.
 """
 
 from __future__ import annotations
@@ -32,11 +32,9 @@ class Config:
 
     UPLOAD_FOLDER: str = os.path.join(BASE_DIR, "uploads")
     TEMP_FOLDER: str = os.path.join(UPLOAD_FOLDER, "temp")
-    YOUTUBE_DOWNLOAD_FOLDER: str = os.path.join(BASE_DIR, "downloads")
     LOG_FILE: str = os.path.join(BASE_DIR, "logs", "toolbox.log")
 
     MAX_CONTENT_LENGTH: int = _env_int("MAX_CONTENT_LENGTH", 512 * 1024 * 1024)
-    YOUTUBE_MAX_DURATION: int = _env_int("YOUTUBE_MAX_DURATION", 3600)
     CLEANUP_INTERVAL: int = 1800
     MAX_BATCH_SIZE: int = 20
     DEFAULT_QUALITY: int = 85
@@ -50,41 +48,6 @@ class Config:
     )
     ALLOWED_MEDIA_EXTENSIONS: FrozenSet[str] = (
         ALLOWED_VIDEO_EXTENSIONS | ALLOWED_IMAGE_EXTENSIONS
-    )
-
-    # Domaines autorisés par le validator d'URL (unique source, consommée
-    # dans `services/essentials/tools.py`).
-    URL_VALIDATOR_ALLOWED_DOMAINS: FrozenSet[str] = frozenset(
-        {
-            "google.com",
-            "www.google.com",
-            "github.com",
-            "www.github.com",
-            "stackoverflow.com",
-            "www.stackoverflow.com",
-            "wikipedia.org",
-            "en.wikipedia.org",
-            "fr.wikipedia.org",
-            "python.org",
-            "www.python.org",
-            "mozilla.org",
-            "www.mozilla.org",
-            "cloudflare.com",
-            "www.cloudflare.com",
-            "example.com",
-            "www.example.com",
-        }
-    )
-    URL_VALIDATOR_ALLOWED_DOMAIN_SUFFIXES: FrozenSet[str] = frozenset(
-        {
-            ".google.com",
-            ".github.com",
-            ".stackoverflow.com",
-            ".wikipedia.org",
-            ".python.org",
-            ".mozilla.org",
-            ".cloudflare.com",
-        }
     )
 
     @classmethod
@@ -162,7 +125,6 @@ class Config:
         for directory in (
             cls.UPLOAD_FOLDER,
             cls.TEMP_FOLDER,
-            cls.YOUTUBE_DOWNLOAD_FOLDER,
             os.path.dirname(cls.LOG_FILE),
         ):
             if directory and not os.path.exists(directory):

@@ -20,6 +20,8 @@ from __future__ import annotations
 import requests
 from flask import Blueprint, current_app, jsonify, render_template
 
+from app.core.rate_limit import limiter
+
 pdf_bp = Blueprint("pdf", __name__, template_folder="../../templates")
 
 
@@ -44,6 +46,7 @@ def index():
 
 
 @pdf_bp.route("/status")
+@limiter.limit("60 per minute")
 def status():
     """Ping rapide de l'instance Stirling PDF (utilisé pour l'UI)."""
     internal = _internal_url()

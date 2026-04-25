@@ -9,6 +9,9 @@ from flask import (Blueprint, current_app, jsonify, render_template, request,
 from PIL import Image
 from werkzeug.utils import secure_filename
 
+from app.core.rate_limit import limiter
+from app.core.uploads import UploadRejected, validate_batch, validate_upload
+
 media_bp = Blueprint("media", __name__)
 
 
@@ -17,15 +20,7 @@ def index():
     return render_template("media.html")
 
 
-def allowed_file(filename):
-    return (
-        "." in filename
-        and filename.rsplit(".", 1)[1].lower()
-        in current_app.config["ALLOWED_MEDIA_EXTENSIONS"]
-    )
-
-
-def is_video(filename):
+def is_video(filename: str) -> bool:
     return (
         "." in filename
         and filename.rsplit(".", 1)[1].lower()
@@ -101,11 +96,11 @@ def process_video(input_path, output_path, quality=85):
 
         command.append(output_path)
 
-        current_app.logger.info(f"Commande FFmpeg: {' '.join(command)}")
-        current_app.logger.info("Début conversion - timeout: 600 secondes")
+        current_app.logger.info("Commande FFmpeg: %s", " ".join(command))
+        current_app.logger.info("Début conversion - timeout: 180 secondes")
 
         _ = subprocess.run(
-            command, capture_output=True, text=True, check=True, timeout=600
+            command, capture_output=True, text=True, check=True, timeout=180
         )
 
         if not os.path.exists(output_path):
@@ -151,13 +146,17 @@ class ResourceManager:
 
 
 @media_bp.route("/convert", methods=["POST"])
+@limiter.limit("10 per minute")
 def convert_media():
     if "file" not in request.files:
         return jsonify({"error": "Fichier manquant"}), 400
 
     file = request.files["file"]
-    if not file or not file.filename:
-        return jsonify({"error": "Fichier invalide"}), 400
+
+    try:
+        validate_upload(file, current_app.config["ALLOWED_MEDIA_EXTENSIONS"])
+    except UploadRejected as exc:
+        return jsonify({"error": str(exc)}), 400
 
     try:
         temp_dir = os.path.join(current_app.config["UPLOAD_FOLDER"], "temp")
@@ -165,7 +164,9 @@ def convert_media():
 
         input_filename = secure_filename(file.filename)
         output_format = request.form.get("format", "").lower()
-        quality = int(request.form.get("quality", 85))
+        if output_format not in current_app.config["ALLOWED_MEDIA_EXTENSIONS"]:
+            return jsonify({"error": f"Format de sortie non autorisé : .{output_format}"}), 400
+        quality = max(0, min(100, int(request.form.get("quality", 85))))
 
         input_path = os.path.join(temp_dir, f"input_{uuid.uuid4()}_{input_filename}")
         output_path = os.path.join(temp_dir, f"output_{uuid.uuid4()}.{output_format}")
@@ -212,27 +213,39 @@ def convert_media():
 
 
 @media_bp.route("/batch", methods=["POST"])
+@limiter.limit("3 per minute")
 def batch_process():
-    """Traite plusieurs images en batch"""
+    """Traite plusieurs images en batch (images uniquement)."""
     if "files[]" not in request.files:
         return jsonify({"error": "Aucun fichier transmis"}), 400
 
-    files = request.files.getlist("files[]")
+    try:
+        validated = validate_batch(
+            request.files.getlist("files[]"),
+            current_app.config["ALLOWED_IMAGE_EXTENSIONS"],
+        )
+    except UploadRejected as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    output_format = request.form.get("output_format", "JPEG").upper()
+    quality = max(0, min(100, int(request.form.get("quality", 85))))
 
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, "w") as zf:
-        for file in files:
-            if file and allowed_file(file.filename):
-                try:
-                    img = Image.open(file.stream)
-                    output_format = request.form.get("output_format", "JPEG").upper()
-                    quality = int(request.form.get("quality", 85))
-                    processed = process_image(img, output_format, quality)
-                    filename = f"converted_{secure_filename(file.filename)}"
-                    zf.writestr(filename, processed.getvalue())
-                except Exception as e:
-                    current_app.logger.error(f"Erreur sur {file.filename}: {str(e)}")
-                    continue
+        for file, _ext in validated:
+            try:
+                img = Image.open(file.stream)
+                processed = process_image(img, output_format, quality)
+                filename = f"converted_{secure_filename(file.filename)}"
+                zf.writestr(filename, processed.getvalue())
+            except Image.DecompressionBombError:
+                current_app.logger.warning(
+                    "Image bomb refusée: %s", file.filename
+                )
+                continue
+            except Exception as exc:
+                current_app.logger.error("Erreur sur %s: %s", file.filename, exc)
+                continue
 
     memory_file.seek(0)
     return send_file(

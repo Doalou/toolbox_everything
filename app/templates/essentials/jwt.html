@@ -1,0 +1,28 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label" for="jwt-input">JSON Web Token</label>
+    <textarea id="jwt-input" class="tool-textarea" style="min-height: 10rem;" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+    <span class="tool-field__hint">
+        <i class="fas fa-triangle-exclamation text-xs"></i>
+        La signature n'est pas vérifiée. N'utilisez pas ce décodage pour valider un token.
+    </span>
+</div>
+{% endblock %}
+
+{% block tool_output %}
+<div class="tool-field">
+    <label class="tool-field__label">Header</label>
+    <pre id="jwt-header" class="tool-output__pre" style="max-height: 8rem;">Aucun résultat</pre>
+</div>
+<div class="tool-field">
+    <label class="tool-field__label">Payload</label>
+    <pre id="jwt-payload" class="tool-output__pre" style="max-height: 14rem;">Aucun résultat</pre>
+</div>
+<div class="tool-field">
+    <label class="tool-field__label">Signature (brut)</label>
+    <code id="jwt-signature" class="tool-output__row" style="word-break: break-all;">Aucun résultat</code>
+</div>
+<span id="jwt-status" class="tool-field__hint"></span>
+{% endblock %}

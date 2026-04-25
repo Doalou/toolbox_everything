@@ -13,6 +13,7 @@ if ROOT not in sys.path:
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("FLASK_ENV", "testing")
+os.environ["RATELIMIT_STORAGE_URI"] = "memory://"
 
 
 @pytest.fixture(scope="session")

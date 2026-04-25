@@ -1,0 +1,20 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label" for="diff-a">Texte A</label>
+    <textarea id="diff-a" class="tool-textarea" style="min-height: 12rem;" placeholder="Ancien contenu"></textarea>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="diff-b">Texte B</label>
+    <textarea id="diff-b" class="tool-textarea" style="min-height: 12rem;" placeholder="Nouveau contenu"></textarea>
+</div>
+
+<label class="tool-check"><input type="checkbox" id="diff-trim"> Ignorer les espaces en début/fin de ligne</label>
+{% endblock %}
+
+{% block tool_output %}
+<div id="diff-output" class="flex flex-col gap-0"></div>
+<span id="diff-status" class="tool-field__hint"></span>
+{% endblock %}

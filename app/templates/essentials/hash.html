@@ -1,0 +1,21 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label" for="hash-input">Texte à hasher</label>
+    <textarea id="hash-input" class="tool-textarea" placeholder="Collez votre texte ici"></textarea>
+    <span class="tool-field__hint">Calcul local via <code>crypto.subtle.digest</code>.</span>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="hash-format">Format</label>
+    <select id="hash-format" class="tool-select">
+        <option value="hex" selected>Hexadécimal</option>
+        <option value="base64">Base64</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block tool_output %}
+<div id="hash-results" class="flex flex-col gap-2"></div>
+{% endblock %}

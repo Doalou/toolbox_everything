@@ -1,0 +1,32 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label">Version</label>
+    <div class="tool-btn-row">
+        <button type="button" class="tool-btn tool-btn--sm tool-btn--indigo" data-uuid-ver="v4" aria-selected="true">v4 aléatoire</button>
+        <button type="button" class="tool-btn tool-btn--sm tool-btn--ghost" data-uuid-ver="v7" aria-selected="false">v7 temporel</button>
+    </div>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="uuid-count">Nombre : <span data-uuid-count>5</span></label>
+    <input id="uuid-count" type="range" min="1" max="50" value="5" class="tool-range">
+</div>
+
+<label class="tool-check"><input type="checkbox" id="uuid-upper"> Majuscules</label>
+<label class="tool-check"><input type="checkbox" id="uuid-no-dash"> Sans tirets</label>
+
+<button id="uuid-regen" class="tool-btn tool-btn--indigo tool-btn--full">
+    <i class="fas fa-dice text-xs"></i> Régénérer
+</button>
+{% endblock %}
+
+{% block tool_output %}
+<div id="uuid-results" class="flex flex-col gap-2"></div>
+<div class="tool-btn-row">
+    <button id="uuid-copy-all" class="tool-btn tool-btn--sm tool-btn--ghost">
+        <i class="fas fa-copy text-xs"></i> Tout copier
+    </button>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{# Layout commun à tous les outils essentials.
+   Chaque outil étend ce template et remplit les blocs :
+     - tool_input        : formulaire / contrôles à gauche
+     - tool_output       : résultat à droite
+     - tool_description  : (optionnel) bas de page
+     - tool_script       : code JS de l'outil (pas de balise <script>)
+#}
+
+{% block title %}{{ tool.title }} | Toolbox Everything{% endblock %}
+
+{% block content %}
+<div class="tool-page">
+    <header class="tool-page__header">
+        <div class="tool-page__header-icon site-dropdown__icon site-dropdown__icon--{{ tool.accent }}">
+            <i class="fas {{ tool.icon }}"></i>
+        </div>
+        <div>
+            <h1 class="tool-page__title">{{ tool.title }}</h1>
+            <p class="tool-page__subtitle">{{ tool.description }}</p>
+        </div>
+        <a href="{{ url_for('essentials.index') }}" class="tool-page__back" aria-label="Retour aux outils">
+            <i class="fas fa-arrow-left text-xs"></i>
+            <span>Retour</span>
+        </a>
+    </header>
+
+    <div class="tool-page__grid">
+        <section class="tool-panel tool-panel--input">
+            {% block tool_input %}{% endblock %}
+        </section>
+
+        <section class="tool-panel tool-panel--output">
+            {% block tool_output %}
+            <div class="tool-output__placeholder" data-tool-placeholder>
+                <i class="fas fa-circle-notch text-xs opacity-40"></i>
+                <span>Le résultat apparaîtra ici.</span>
+            </div>
+            {% endblock %}
+        </section>
+    </div>
+
+    {% block tool_description %}{% endblock %}
+</div>
+
+{% for ext in tool.external_scripts %}
+<script src="{{ ext.src }}"
+        integrity="{{ ext.integrity }}"
+        crossorigin="{{ ext.crossorigin }}"
+        referrerpolicy="{{ ext.referrerpolicy }}"
+        defer></script>
+{% endfor %}
+
+<script src="{{ url_for('static', filename='js/essentials/_common.js') }}" defer></script>
+
+{% block tool_script_tag %}
+<script src="{{ url_for('static', filename='js/essentials/' ~ tool.slug ~ '.js') }}" defer></script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Speedtest | Toolbox Everything{% endblock %}
+
+{% block content %}
+{% if librespeed_configured %}
+    <div class="pdf-frame-wrap">
+        <div class="pdf-frame-toolbar">
+            <div class="pdf-frame-toolbar__left">
+                <span class="pdf-frame-toolbar__dot" id="speedtestStatusDot" aria-hidden="true"></span>
+                <h1 class="pdf-frame-toolbar__title">Instance LibreSpeed</h1>
+            </div>
+            <div class="pdf-frame-toolbar__right">
+                <a href="{{ librespeed_public_url }}" target="_blank" rel="noopener noreferrer"
+                   class="tool-btn tool-btn--ghost tool-btn--sm" aria-label="Ouvrir dans un nouvel onglet">
+                    <i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+        </div>
+        <iframe id="speedtestFrame"
+                class="pdf-frame"
+                src="{{ librespeed_public_url }}"
+                title="LibreSpeed"
+                loading="lazy"
+                referrerpolicy="no-referrer"></iframe>
+    </div>
+
+    <script nonce="{{ csp_nonce }}">
+        (function () {
+            const dot = document.getElementById('speedtestStatusDot');
+            fetch('/speedtest/status', { headers: { 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(data => {
+                    dot.classList.add(data.reachable ? 'pdf-frame-toolbar__dot--ok' : 'pdf-frame-toolbar__dot--warn');
+                })
+                .catch(() => dot.classList.add('pdf-frame-toolbar__dot--warn'));
+        })();
+    </script>
+{% else %}
+    <div class="max-w-2xl mx-auto px-4 py-12">
+        <div class="tool-hero">
+            <h1 class="tool-hero__title">Speedtest</h1>
+            <p class="tool-hero__subtitle">
+                LibreSpeed n'est pas encore démarré.
+            </p>
+        </div>
+
+        <div class="tool-panel">
+            <div class="pdf-setup-block">
+                <pre class="pdf-setup-code"><code>docker compose up -d</code></pre>
+            </div>
+
+            <a href="https://github.com/librespeed/speedtest"
+               target="_blank" rel="noopener noreferrer"
+               class="tool-btn tool-btn--ghost tool-btn--sm">
+                <i class="fab fa-github"></i>
+                <span>LibreSpeed</span>
+            </a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block tools_features %}
+{% include 'tool_features.html' %}
+{% endblock %}

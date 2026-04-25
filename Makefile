@@ -3,11 +3,14 @@
 # =====================================
 
 # Variables
-PYTHON := python3
-PIP := pip3
+PYTHON := python
+PIP := pip
 FLASK_APP := run.py
 PORT := 8000
-APP_VERSION := $(shell grep -s '^APP_VERSION=' .env | cut -d= -f2 || echo "1.3.0")
+APP_VERSION := $(shell if [ -f VERSION ]; then tr -d '\r\n' < VERSION; else grep -s '^APP_VERSION=' .env | cut -d= -f2 || echo "1.3.1"; fi)
+GHCR_IMAGE ?= ghcr.io/doalou/toolbox_everything
+TAILWIND_VERSION := 3.4.13
+TAILWIND := $(PYTHON) scripts/tailwind.py
 
 # Couleurs pour l'affichage
 GREEN := \033[0;32m
@@ -15,7 +18,7 @@ YELLOW := \033[1;33m
 RED := \033[0;31m
 NC := \033[0m # No Color
 
-.PHONY: help install dev run build clean test lint format security check docker-build docker-run
+.PHONY: help install dev run build clean test lint format security check docker-build docker-run tailwind-install tailwind-build tailwind-watch
 
 # Affichage de l'aide
 help:
@@ -34,6 +37,10 @@ help:
 	@echo "  $(YELLOW)check$(NC)         - Vérifications complètes (lint + security)"
 	@echo "  $(YELLOW)docker-build$(NC)  - Construction de l'image Docker"
 	@echo "  $(YELLOW)docker-run$(NC)    - Lancement du conteneur Docker"
+	@echo ""
+	@echo "  $(YELLOW)tailwind-install$(NC) - Télécharge le binaire Tailwind CLI standalone"
+	@echo "  $(YELLOW)tailwind-build$(NC)   - Build CSS (minifié) — à lancer avant dev"
+	@echo "  $(YELLOW)tailwind-watch$(NC)   - Build CSS en continu (dev)"
 	@echo ""
 
 # Installation complète
@@ -56,8 +63,8 @@ install:
 	$(PIP) install -r requirements.txt
 	@echo "$(GREEN)✓ Dépendances installées$(NC)"
 
-# Mode développement
-dev:
+# Mode développement (rebuild Tailwind pour éviter un CSS local obsolète)
+dev: tailwind-build
 	@echo "$(YELLOW)Lancement en mode développement...$(NC)"
 	@echo "$(GREEN)Serveur accessible sur http://localhost:$(PORT)$(NC)"
 	$(PYTHON) $(FLASK_APP) --dev --port $(PORT)
@@ -69,8 +76,21 @@ run:
 	$(PYTHON) $(FLASK_APP) --port $(PORT)
 
 # Construction
-build: clean install
+build: clean install tailwind-build
 	@echo "$(GREEN)✓ Application construite$(NC)"
+
+# ──────────────────────────────────────────────────────
+# Tailwind CSS (CLI standalone, zéro Node)
+# ──────────────────────────────────────────────────────
+tailwind-install:
+	$(TAILWIND) install
+
+tailwind-build:
+	$(TAILWIND) build
+	@echo "$(GREEN)✓ CSS généré → app/static/css/tailwind.css$(NC)"
+
+tailwind-watch:
+	$(TAILWIND) watch
 
 # Nettoyage
 clean:
@@ -134,7 +154,7 @@ check: lint security
 # Construction Docker
 docker-build:
 	@echo "$(YELLOW)Construction de l'image Docker (v$(APP_VERSION))...$(NC)"
-	docker build --build-arg APP_VERSION=$(APP_VERSION) -t toolbox-everything:$(APP_VERSION) -t toolbox-everything:latest .
+	docker build --build-arg APP_VERSION=$(APP_VERSION) -t toolbox-everything:$(APP_VERSION) -t toolbox-everything:latest -t $(GHCR_IMAGE):$(APP_VERSION) -t $(GHCR_IMAGE):latest .
 	@echo "$(GREEN)✓ Image Docker construite (v$(APP_VERSION))$(NC)"
 
 # Lancement Docker

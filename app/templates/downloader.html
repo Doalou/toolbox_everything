@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Téléchargeur vidéo | Toolbox Everything{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+    <div class="tool-hero">
+        <h1 class="tool-hero__title">
+            Téléchargeur <span class="dl-accent">vidéo &amp; audio</span>
+        </h1>
+        <p class="tool-hero__subtitle">
+            YouTube, Vimeo, Dailymotion ou TikTok. Vidéo MP4 ou audio MP3.
+        </p>
+    </div>
+
+    <!-- Bandeau d'état (plateforme détectée + quota) -->
+    <div class="dl-status" data-dl-status>
+        <span class="dl-status__platform" data-dl-platform-pill>
+            <i class="fas fa-link text-[10px] opacity-70" data-dl-platform-icon></i>
+            <span data-dl-platform-label>En attente d'un lien</span>
+        </span>
+        <span class="dl-status__quota" data-dl-quota hidden>
+            <i class="fas fa-gauge-high text-[10px] opacity-70"></i>
+            <span data-dl-quota-text></span>
+        </span>
+    </div>
+
+    <div class="tool-panel mb-5">
+        <form id="urlForm">
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <i class="fas fa-link absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" data-dl-input-icon></i>
+                    <input type="url" id="videoUrl" required
+                           class="tool-input dl-input"
+                           data-dl-input
+                           autocomplete="off" spellcheck="false"
+                           placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+                <button type="submit" class="tool-btn tool-btn--indigo" data-dl-submit>
+                    <i class="fas fa-magnifying-glass text-xs"></i>
+                    <span>Analyser</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Historique récent (localStorage, jamais envoyé) -->
+        <div class="dl-history" data-dl-history hidden>
+            <div class="dl-history__head">
+                <span class="dl-history__title">
+                    <i class="fas fa-clock-rotate-left text-[10px] opacity-70"></i>
+                    Récent (local uniquement)
+                </span>
+                <button type="button" class="dl-history__clear" data-dl-history-clear>
+                    Effacer
+                </button>
+            </div>
+            <ul class="dl-history__list" data-dl-history-list></ul>
+        </div>
+    </div>
+
+    <div id="videoLoading" class="hidden">
+        <div class="tool-panel flex flex-col items-center py-10 gap-4">
+            <div class="dl-spinner"></div>
+            <div class="text-center">
+                <p class="text-sm font-semibold text-gray-900 dark:text-white">Analyse en cours</p>
+                <p class="tool-meta justify-center mt-1">Récupération des informations</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="videoPreview" class="hidden">
+        <div class="tool-panel mb-5">
+            <div class="flex flex-col md:flex-row gap-5">
+                <div class="w-full md:w-56 flex-shrink-0">
+                    <div class="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <img id="thumbnail" class="w-full h-full object-cover" alt="Miniature">
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col justify-center gap-2">
+                    <h2 id="videoTitle" class="text-base font-bold text-gray-900 dark:text-white leading-snug"></h2>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                        <p id="channelName" class="tool-meta">
+                            <i class="fas fa-user-circle"></i>
+                            <span></span>
+                        </p>
+                        <p id="videoDuration" class="tool-meta">
+                            <i class="fas fa-clock"></i>
+                            <span></span>
+                        </p>
+                        <p id="videoViews" class="tool-meta">
+                            <i class="fas fa-eye"></i>
+                            <span></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="tool-panel">
+                <h3 class="tool-panel__heading">
+                    <i class="fas fa-video text-indigo-500" data-dl-platform-tint></i>
+                    Vidéo
+                </h3>
+                <div class="space-y-3">
+                    <select id="videoQuality" class="tool-select text-center">
+                        <option value="highest">Meilleure qualité disponible</option>
+                        <option value="1080p">1080p</option>
+                        <option value="720p">720p</option>
+                        <option value="480p">480p</option>
+                        <option value="360p">360p</option>
+                    </select>
+                    <button type="button"
+                            class="tool-btn tool-btn--indigo tool-btn--full"
+                            data-dl-platform-cta
+                            data-dl-action="video">
+                        <i class="fas fa-download text-xs"></i>
+                        <span>Télécharger MP4</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tool-panel">
+                <h3 class="tool-panel__heading">
+                    <i class="fas fa-music text-emerald-500"></i>
+                    Audio
+                </h3>
+                <div class="space-y-3">
+                    <p class="tool-meta">
+                        <i class="fas fa-info-circle"></i>
+                        Format MP3, qualité 192 kbps
+                    </p>
+                    <button type="button"
+                            class="tool-btn tool-btn--green tool-btn--full"
+                            data-dl-action="audio">
+                        <i class="fas fa-download text-xs"></i>
+                        <span>Télécharger MP3</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="progressOverlay" class="hidden mt-5">
+        <div class="tool-panel">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">Téléchargement</span>
+                <button id="cancelButton"
+                        type="button"
+                        class="tool-btn tool-btn--sm tool-btn--ghost">
+                    <i class="fas fa-times text-[10px]"></i>
+                    <span>Annuler</span>
+                </button>
+            </div>
+            <div class="tool-progress">
+                <div id="progressBar" class="tool-progress__bar dl-progress__bar" style="width: 0%"></div>
+            </div>
+            <p id="progressText" class="tool-meta mt-2">Préparation</p>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/downloader.js') }}" defer></script>
+{% endblock %}
+
+{% block tools_features %}
+{% include 'tool_features.html' %}
+{% endblock %}

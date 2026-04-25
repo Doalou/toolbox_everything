@@ -1,0 +1,36 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-btn-row">
+    <button class="tool-btn tool-btn--sm tool-btn--indigo" data-json-op="format" aria-selected="true">Formater</button>
+    <button class="tool-btn tool-btn--sm tool-btn--ghost" data-json-op="minify" aria-selected="false">Minifier</button>
+    <button class="tool-btn tool-btn--sm tool-btn--ghost" data-json-op="analyze" aria-selected="false">Analyser</button>
+    <div class="ml-auto flex items-center gap-2">
+        <label class="tool-field__label" for="json-indent" style="text-transform:none;">Indent</label>
+        <select id="json-indent" class="tool-select" style="width:auto;">
+            <option value="2" selected>2</option>
+            <option value="4">4</option>
+            <option value="\t">tab</option>
+        </select>
+    </div>
+</div>
+
+<div class="tool-field">
+    <label class="tool-field__label" for="json-input">Entrée JSON</label>
+    <textarea id="json-input" class="tool-textarea" style="min-height: 14rem;" placeholder='{"name": "Toolbox", "items": [1, 2, 3]}'></textarea>
+</div>
+
+<span id="json-status" class="tool-field__hint"></span>
+{% endblock %}
+
+{% block tool_output %}
+<div class="tool-field">
+    <label class="tool-field__label">Résultat</label>
+    <pre id="json-output" class="tool-output__pre" style="min-height: 14rem;"></pre>
+    <div class="tool-btn-row">
+        <button class="tool-btn tool-btn--sm tool-btn--ghost" data-copy-target="#json-output">
+            <i class="fas fa-copy text-xs"></i> Copier
+        </button>
+    </div>
+</div>
+{% endblock %}

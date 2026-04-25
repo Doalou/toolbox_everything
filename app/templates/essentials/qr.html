@@ -1,0 +1,41 @@
+{% extends 'essentials/_tool_layout.html' %}
+
+{% block tool_input %}
+<div class="tool-field">
+    <label class="tool-field__label" for="qr-text">Contenu</label>
+    <textarea id="qr-text" class="tool-textarea" placeholder="https://exemple.com ou n'importe quel texte">https://github.com/doalou/toolbox_everything</textarea>
+</div>
+
+<div class="tool-inline-grid">
+    <div class="tool-field">
+        <label class="tool-field__label" for="qr-size">Taille du module</label>
+        <input id="qr-size" type="range" min="4" max="14" value="8" class="tool-range">
+        <span class="tool-field__hint" data-qr-size-value>8 px</span>
+    </div>
+    <div class="tool-field">
+        <label class="tool-field__label" for="qr-ecl">Correction d'erreur</label>
+        <select id="qr-ecl" class="tool-select">
+            <option value="L">L (7%)</option>
+            <option value="M" selected>M (15%)</option>
+            <option value="Q">Q (25%)</option>
+            <option value="H">H (30%)</option>
+        </select>
+    </div>
+</div>
+{% endblock %}
+
+{% block tool_output %}
+<div id="qr-output" class="tool-output__placeholder">
+    <span>Le QR code apparaîtra ici.</span>
+</div>
+<div class="tool-btn-row" id="qr-actions" hidden>
+    <button id="qr-download-png" class="tool-btn tool-btn--sm tool-btn--blue">
+        <i class="fas fa-download text-xs"></i>
+        <span>PNG</span>
+    </button>
+    <button id="qr-download-svg" class="tool-btn tool-btn--sm tool-btn--ghost">
+        <i class="fas fa-download text-xs"></i>
+        <span>SVG</span>
+    </button>
+</div>
+{% endblock %}

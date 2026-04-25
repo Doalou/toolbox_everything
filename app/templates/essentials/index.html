@@ -1,115 +1,34 @@
 {% extends 'base.html' %}
 
+{% block title %}Outils essentiels | Toolbox Everything{% endblock %}
+
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 py-10">
-    <div class="text-center mb-12">
+    <div class="text-center mb-8">
         <h1 class="home-hero__title" style="font-size: clamp(1.8rem, 4vw, 2.6rem);">
             Les outils <span class="home-hero__title-accent">essentiels</span>
         </h1>
         <p class="home-hero__subtitle">
-            Tout ce qu'il faut pour le quotidien : génération, conversion, analyse.
+            {{ tools|length }} micro-outils pour le quotidien. Tout est calculé dans le navigateur,
+            rien ne part sur le réseau.
         </p>
     </div>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <a href="/essentials/qr-generator" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--sky">
-                <i class="fas fa-qrcode text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Générateur QR Code</h3>
-                <p class="ess-card__text">Créez des QR codes personnalisés avec différents niveaux de correction.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/password-generator" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--emerald">
-                <i class="fas fa-shield-alt text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Mots de passe</h3>
-                <p class="ess-card__text">Générez des mots de passe sécurisés avec analyse de force intégrée.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/text-processor" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--violet">
-                <i class="fas fa-file-alt text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Analyseur de texte</h3>
-                <p class="ess-card__text">Analysez, formatez et nettoyez vos textes avec des stats détaillées.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/color-palette" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--pink">
-                <i class="fas fa-palette text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Palette de couleurs</h3>
-                <p class="ess-card__text">Composez des palettes harmonieuses pour vos designs.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/url-validator" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--sky">
-                <i class="fas fa-link text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Validateur d'URL</h3>
-                <p class="ess-card__text">Validez et analysez la structure de vos URLs.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/hash-calculator" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--rose">
-                <i class="fas fa-hashtag text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Calculateur de hash</h3>
-                <p class="ess-card__text">Calculez MD5, SHA1, SHA256 et SHA512 de vos textes.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/base64" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--amber">
-                <i class="fas fa-code text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Encodeur Base64</h3>
-                <p class="ess-card__text">Encodez et décodez vos données en Base64.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/json-formatter" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--emerald">
-                <i class="fas fa-code text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Formateur JSON</h3>
-                <p class="ess-card__text">Formatez, validez et analysez vos données JSON.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
-
-        <a href="/essentials/timestamp" class="ess-card group">
-            <div class="ess-card__icon site-dropdown__icon--violet">
-                <i class="fas fa-clock text-lg"></i>
-            </div>
-            <div class="ess-card__body">
-                <h3 class="ess-card__title">Convertisseur Timestamp</h3>
-                <p class="ess-card__text">Convertissez entre timestamps Unix et dates lisibles.</p>
-            </div>
-            <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
-        </a>
+        {% for tool in tools %}
+            <a href="{{ url_for(tool.endpoint) }}"
+               class="ess-card group"
+               data-category="{{ tool.category|default('') }}">
+                <div class="ess-card__icon site-dropdown__icon site-dropdown__icon--{{ tool.accent }}">
+                    <i class="fas {{ tool.icon }} text-lg"></i>
+                </div>
+                <div class="ess-card__body">
+                    <h3 class="ess-card__title">{{ tool.title }}</h3>
+                    <p class="ess-card__text">{{ tool.description }}</p>
+                </div>
+                <span class="ess-card__arrow"><i class="fas fa-arrow-right text-xs"></i></span>
+            </a>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
