@@ -1,8 +1,8 @@
 # Dépendances développement (tests, qualité code)
 -r requirements.txt
 
-pytest==8.4.1
+pytest==9.0.3
 pytest-cov==7.0.0
-black==25.9.0
+black==26.3.1
 flake8==7.3.0
 isort==7.1.0
