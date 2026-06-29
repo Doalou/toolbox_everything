@@ -1,6 +1,7 @@
 # Toolbox Everything
 
 > Une boîte à outils web, modulaire et sans prise de tête : télécharger une vidéo (YouTube, Vimeo, Dailymotion, TikTok), convertir un média, bidouiller un QR code ou un hash, et manipuler des PDF sans quitter son navigateur.
+# Le projet est actuellement en cours de refonte, la description ci-dessous correspond à l'ancienne version et une nouvelle version sera bientôt proposée.
 
 Stack : **Flask + Tailwind**, tout en Docker, prêt à être posé derrière un reverse proxy.
 
